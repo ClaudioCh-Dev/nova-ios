@@ -16,7 +16,7 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     
     
     let locationManager = CLLocationManager()
-    
+    var usuarioSesion: UserDetail?
    
     
     override func viewDidLoad() {
