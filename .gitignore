@@ -1,3 +1,8 @@
+# Xcode
+xcuserdata/
+*.xcuserdatad
+DerivedData/
+
 .DS_Store
 __MACOSX/
 .AppleDouble
