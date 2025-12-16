@@ -7,3 +7,8 @@ DerivedData/
 __MACOSX/
 .AppleDouble
 .LSOverride
+
+xcuserdata/
+*.xcuserstate
+
+
