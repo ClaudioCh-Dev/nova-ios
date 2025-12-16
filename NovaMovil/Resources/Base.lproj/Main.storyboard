@@ -236,7 +236,7 @@
                         <viewLayoutGuide key="safeArea" id="WB9-1f-7Af"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstItem="btnSkip" firstAttribute="leading" secondItem="WB9-1f-7Af" secondAttribute="leading" constant="290" id="PSe-Uu-0mb"/>
+                            
                             <constraint firstItem="card1" firstAttribute="width" secondItem="t9p-ET-3sJ" secondAttribute="width" id="c1-eq-w"/>
                             <constraint firstItem="card2" firstAttribute="width" secondItem="t9p-ET-3sJ" secondAttribute="width" id="c2-eq-w"/>
                             <constraint firstItem="card3" firstAttribute="width" secondItem="t9p-ET-3sJ" secondAttribute="width" id="c3-eq-w"/>
@@ -350,9 +350,8 @@
                                     <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="0.5" id="u5h-WB-NGj"/>
                                 </constraints>
                             </view>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="bna-5t-IGC">
-                                <rect key="frame" x="82" y="719" width="211" height="35"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="bna-5t-IGC">
+                                <rect key="frame" x="91" y="699" width="211" height="35"/>
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="filled" title="BOTON PRUEBAS VISTA"/>
                                 <connections>
@@ -398,6 +397,8 @@
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="t0v-f0-i1t" secondAttribute="trailing" id="mLu-tX-0JQ"/>
                             <constraint firstItem="iui-Xh-OaJ" firstAttribute="top" secondItem="GQB-rN-zSS" secondAttribute="bottom" id="muq-AD-qHS"/>
                             <constraint firstItem="Acr-nZ-9W5" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="100" id="pa6-2z-m39"/>
+                            <constraint firstItem="bna-5t-IGC" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="bn-centerX"/>
+                            <constraint firstItem="bna-5t-IGC" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="20" id="bn-bottom"/>
                             <constraint firstItem="t0v-f0-i1t" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="uGH-bD-82p"/>
                             <constraint firstItem="0LE-Xf-1LN" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="50" id="ua2-bc-jTG"/>
                         </constraints>
