@@ -1,4 +1,14 @@
+# Xcode
+xcuserdata/
+*.xcuserdatad
+DerivedData/
+
 .DS_Store
 __MACOSX/
 .AppleDouble
 .LSOverride
+
+xcuserdata/
+*.xcuserstate
+
+
