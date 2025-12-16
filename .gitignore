@@ -11,4 +11,7 @@ __MACOSX/
 xcuserdata/
 *.xcuserstate
 
+# Xcode user state
+*.xcuserstate
+xcuserdata/
 
