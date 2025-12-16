@@ -33,6 +33,9 @@ class LoginViewController: UIViewController {
                         // Guardamos token básico
                         UserDefaults.standard.set(loginResp.token, forKey: "userToken")
                         
+                        // Guardamos el id
+                        UserDefaults.standard.set(loginResp.userId, forKey: "userId")
+                        
                         self?.obtenerDatosDeUsuario(id: loginResp.userId, token: loginResp.token)
                         
                     case .failure:
