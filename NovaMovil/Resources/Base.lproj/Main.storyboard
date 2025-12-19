@@ -625,7 +625,7 @@
                                 </constraints>
                             </imageView>
                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Nombres" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="mY9-sh-YEd">
-                                <rect key="frame" x="10" y="299" width="373" height="45"/>
+                                <rect key="frame" x="15" y="299" width="363" height="45"/>
                                 <color key="backgroundColor" white="1" alpha="0.75098302980132436" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="45" id="ZRi-cd-93I"/>
@@ -639,7 +639,7 @@
                                 </userDefinedRuntimeAttributes>
                             </textField>
                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Email" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="j4G-G7-Rlr">
-                                <rect key="frame" x="10" y="364" width="373" height="45"/>
+                                <rect key="frame" x="15" y="364" width="363" height="45"/>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.74335161425496687" colorSpace="custom" customColorSpace="sRGB"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="45" id="K3t-Xk-gQ5"/>
@@ -686,23 +686,23 @@
                         <viewLayoutGuide key="safeArea" id="Xhn-hd-84Q"/>
                         <constraints>
                             <constraint firstItem="KYc-WZ-jGV" firstAttribute="top" secondItem="2Kg-fw-923" secondAttribute="bottom" constant="30" id="0Sv-mE-AZh"/>
-                            <constraint firstItem="mY9-sh-YEd" firstAttribute="leading" secondItem="Xhn-hd-84Q" secondAttribute="leading" constant="10" id="3bJ-jt-14g"/>
+                            <constraint firstItem="mY9-sh-YEd" firstAttribute="leading" secondItem="Xhn-hd-84Q" secondAttribute="leading" constant="15" id="3bJ-jt-14g"/>
                             <constraint firstItem="j4G-G7-Rlr" firstAttribute="top" secondItem="mY9-sh-YEd" secondAttribute="bottom" constant="20" id="4Y8-tC-O9X"/>
                             <constraint firstItem="u8Q-bq-CtS" firstAttribute="trailing" secondItem="Xhn-hd-84Q" secondAttribute="trailing" id="9FX-m0-YP8"/>
                             <constraint firstItem="lAo-Um-UeM" firstAttribute="top" secondItem="u8Q-bq-CtS" secondAttribute="bottom" constant="20" id="A5o-Jh-rPs"/>
                             <constraint firstItem="mY9-sh-YEd" firstAttribute="top" secondItem="lAo-Um-UeM" secondAttribute="bottom" constant="30" id="Blc-jx-2m1"/>
                             <constraint firstItem="lAo-Um-UeM" firstAttribute="leading" secondItem="Xhn-hd-84Q" secondAttribute="leading" constant="50" id="Cxg-oi-hya"/>
-                            <constraint firstItem="Xhn-hd-84Q" firstAttribute="trailing" secondItem="mY9-sh-YEd" secondAttribute="trailing" constant="10" id="Duv-2k-PSl"/>
+                            <constraint firstItem="Xhn-hd-84Q" firstAttribute="trailing" secondItem="mY9-sh-YEd" secondAttribute="trailing" constant="15" id="Duv-2k-PSl"/>
                             <constraint firstItem="Xhn-hd-84Q" firstAttribute="trailing" secondItem="KYc-WZ-jGV" secondAttribute="trailing" constant="20" id="Ex8-Ya-L5a"/>
                             <constraint firstItem="Xhn-hd-84Q" firstAttribute="trailing" secondItem="2Kg-fw-923" secondAttribute="trailing" constant="20" id="MTc-SH-bCf"/>
-                            <constraint firstItem="j4G-G7-Rlr" firstAttribute="leading" secondItem="Xhn-hd-84Q" secondAttribute="leading" constant="10" id="MsH-zC-m65"/>
+                            <constraint firstItem="j4G-G7-Rlr" firstAttribute="leading" secondItem="Xhn-hd-84Q" secondAttribute="leading" constant="15" id="MsH-zC-m65"/>
                             <constraint firstItem="KYc-WZ-jGV" firstAttribute="leading" secondItem="Xhn-hd-84Q" secondAttribute="leading" constant="20" id="SFe-fe-flc"/>
                             <constraint firstItem="u8Q-bq-CtS" firstAttribute="leading" secondItem="Xhn-hd-84Q" secondAttribute="leading" id="TZ1-fz-em9"/>
                             <constraint firstItem="2Kg-fw-923" firstAttribute="leading" secondItem="Xhn-hd-84Q" secondAttribute="leading" constant="20" id="dUa-jd-znc"/>
                             <constraint firstItem="u8Q-bq-CtS" firstAttribute="top" secondItem="Xhn-hd-84Q" secondAttribute="top" constant="10" id="ez4-1V-IyC"/>
                             <constraint firstItem="Xhn-hd-84Q" firstAttribute="trailing" secondItem="lAo-Um-UeM" secondAttribute="trailing" constant="50" id="hk8-i9-KO0"/>
                             <constraint firstItem="2Kg-fw-923" firstAttribute="top" secondItem="j4G-G7-Rlr" secondAttribute="bottom" constant="110" id="jNK-6A-atr"/>
-                            <constraint firstItem="Xhn-hd-84Q" firstAttribute="trailing" secondItem="j4G-G7-Rlr" secondAttribute="trailing" constant="10" id="uAj-9h-S87"/>
+                            <constraint firstItem="Xhn-hd-84Q" firstAttribute="trailing" secondItem="j4G-G7-Rlr" secondAttribute="trailing" constant="15" id="uAj-9h-S87"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="hWs-nG-9Df"/>
@@ -871,7 +871,7 @@
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
                             <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="tfl-91-FbH">
-                                <rect key="frame" x="10" y="267" width="373" height="100"/>
+                                <rect key="frame" x="15" y="267" width="363" height="100"/>
                                 <color key="backgroundColor" systemColor="secondaryLabelColor"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="100" id="OhC-dW-MZI"/>
@@ -922,9 +922,9 @@
                         <viewLayoutGuide key="safeArea" id="2bp-Ay-l5r"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstItem="2bp-Ay-l5r" firstAttribute="trailing" secondItem="tfl-91-FbH" secondAttribute="trailing" constant="10" id="0SX-MT-46r"/>
+                            <constraint firstItem="2bp-Ay-l5r" firstAttribute="trailing" secondItem="tfl-91-FbH" secondAttribute="trailing" constant="15" id="0SX-MT-46r"/>
                             <constraint firstAttribute="trailing" secondItem="Oh1-OI-yrt" secondAttribute="trailing" id="3j9-WW-aUU"/>
-                            <constraint firstItem="tfl-91-FbH" firstAttribute="leading" secondItem="2bp-Ay-l5r" secondAttribute="leading" constant="10" id="48N-PP-dE4"/>
+                            <constraint firstItem="tfl-91-FbH" firstAttribute="leading" secondItem="2bp-Ay-l5r" secondAttribute="leading" constant="15" id="48N-PP-dE4"/>
                             <constraint firstItem="Oh1-OI-yrt" firstAttribute="top" secondItem="MEe-O8-eyN" secondAttribute="top" id="8FP-Gb-vcX"/>
                             <constraint firstItem="2bp-Ay-l5r" firstAttribute="bottom" secondItem="itD-RV-kna" secondAttribute="bottom" constant="30" id="AMa-sT-kie"/>
                             <constraint firstItem="fRh-E7-N97" firstAttribute="top" secondItem="2bp-Ay-l5r" secondAttribute="top" constant="10" id="IZH-6H-mDd"/>
