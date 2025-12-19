@@ -23,7 +23,7 @@ class LoginViewController: UIViewController {
                     presentarAlerta(mensaje: "Introduzca su contraseña")
                     return
                 }
-                
+        
                 let datosLogin = LoginRequest(email: email, password: password)
              
                 AuthService.shared.login(req: datosLogin) { [weak self] result in
@@ -45,7 +45,7 @@ class LoginViewController: UIViewController {
                     }
                 }
             }
-            
+       
             private func obtenerDatosDeUsuario(id: Int, token: String) {
                 UserService.shared.obtenerUsuario(id: id, token: token) { [weak self] result in
                     DispatchQueue.main.async {
@@ -65,17 +65,18 @@ class LoginViewController: UIViewController {
                     }
                 }
             }
-            
-            // MARK: - Navigation
+        
+       /// MARK: - Navigation
             override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
                 if segue.identifier == "loginSegue" {
                     if let destino = segue.destination as? HomeViewController,
                        let usuario = sender as? UserDetail {
-                        destino.usuarioSesion = usuario
+                       destino.usuarioSesion = usuario
                         print("usuario: \(usuario)")
                     }
                 }
             }
+        
             
             private func presentarAlerta(mensaje: String) {
                 let alerta = UIAlertController(title: "Atención", message: mensaje, preferredStyle: .alert)
