@@ -135,3 +135,21 @@ class EmergencyLocationService {
                 completion(.failure(
                     NSError(
                         domain: "",
+                        code: httpResponse.statusCode,
+                        userInfo: [NSLocalizedDescriptionKey: errorMsg]
+                    )
+                ))
+                return
+            }
+
+            guard let data = data else { return }
+
+            do {
+                let decoded = try JSONDecoder().decode(T.self, from: data)
+                completion(.success(decoded))
+            } catch {
+                completion(.failure(error))
+            }
+        }.resume()
+    }
+}
