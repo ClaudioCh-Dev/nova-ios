@@ -84,13 +84,13 @@ class HomeViewController: UIViewController, MKMapViewDelegate, UICollectionViewD
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if indexPath.item == 0 {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AgregarCelda", for: indexPath) as! AgregarContactoCell
-            return cell
+             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AgregarCelda", for: indexPath) as! AgregarContactoCell
+             return cell
         } else {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "celdaContacto", for: indexPath) as! ContactoCell
-            let contacto = contactos[indexPath.item - 1]
-            cell.configurarCon(contacto)
-            return cell
+           let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "celdaContacto", for: indexPath) as! ContactoCell
+           let contacto = contactos[indexPath.item - 1]
+           cell.configurarCon(contacto)
+           return cell
         }
     }
     
@@ -135,3 +135,4 @@ extension HomeViewController: CLLocationManagerDelegate {
         mapView.setRegion(region, animated: true)
     }
 }
+
