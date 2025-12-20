@@ -7,6 +7,10 @@ class ContactsViewController: UIViewController, UITableViewDataSource, UITableVi
     @IBOutlet weak var contactosTable: UITableView!
     
     var contactos: [CNContact] = [] // Aquí guardamos los contactos
+    var usuarioSesion: UserDetail?   // 👈 AÑADE ESTO
+
+    // Agrega esta propiedad al inicio de la clase
+    var contactoSeleccionado: ((CNContact) -> Void)?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -57,34 +61,67 @@ class ContactsViewController: UIViewController, UITableViewDataSource, UITableVi
     // MARK: - Acceso a contactos
     private func requestContactsAccess() {
         let store = CNContactStore()
-        store.requestAccess(for: .contacts) { granted, error in
-            if granted {
-                let keys = [CNContactGivenNameKey, CNContactFamilyNameKey, CNContactPhoneNumbersKey]
-                let request = CNContactFetchRequest(keysToFetch: keys as [CNKeyDescriptor])
-                
-                var fetchedContacts: [CNContact] = []
-                do {
-                    try store.enumerateContacts(with: request) { contact, stop in
-                        fetchedContacts.append(contact)
-                    }
-                    
-                    DispatchQueue.main.async {
-                        self.contactos = fetchedContacts
-                        self.contactosTable.reloadData()
-                    }
-                    
-                } catch {
-                    print("Error al leer contactos:", error)
+           let status = CNContactStore.authorizationStatus(for: .contacts)
+
+           switch status {
+
+           case .authorized:
+               fetchContacts(store: store)
+
+           case .notDetermined:
+               store.requestAccess(for: .contacts) { granted, _ in
+                   if granted {
+                       self.fetchContacts(store: store)
+                   }
+               }
+
+           case .denied, .restricted:
+               print("Permiso de contactos denegado")
+
+           @unknown default:
+               break
+           }
+    }
+    
+    private func fetchContacts(store: CNContactStore) {
+        let keys = [
+            CNContactGivenNameKey,
+            CNContactFamilyNameKey,
+            CNContactPhoneNumbersKey
+        ]
+        
+        let request = CNContactFetchRequest(keysToFetch: keys as [CNKeyDescriptor])
+        
+        DispatchQueue.global(qos: .userInitiated).async { // hilo de fondo
+            var fetchedContacts: [CNContact] = []
+            
+            do {
+                try store.enumerateContacts(with: request) { contact, _ in
+                    fetchedContacts.append(contact)
                 }
-            } else {
-                print("Permiso denegado")
+                
+                // Actualizamos la UI en el main thread
+                DispatchQueue.main.async {
+                    self.contactos = fetchedContacts
+                    self.contactosTable.reloadData()
+                }
+                
+            } catch {
+                print("Error al leer contactos:", error)
             }
         }
     }
-    
+
+
     // MARK: - Función de ejemplo para predeterminado
     private func agregarPredeterminado(_ contact: CNContact) {
         print("Contacto predeterminado: \(contact.givenName)")
-        // Aquí agregas tu lógica
+           
+           // Avisamos a HomeViewController
+           contactoSeleccionado?(contact)
+           
+           // Cerramos la vista
+           dismiss(animated: true)
+
     }
 }

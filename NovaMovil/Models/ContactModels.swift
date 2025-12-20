@@ -15,3 +15,8 @@ struct CreateContactRequest: Codable {
     let phone: String
     let email: String?
 }
+
+struct ContactoUI {
+    let nombre: String
+    let id: String? // opcional si usas identificador CNContact
+}

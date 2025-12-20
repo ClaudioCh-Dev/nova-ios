@@ -8,3 +8,11 @@ struct UserDetail: Codable {
     let phone: String
     let status: String
 }
+
+
+
+
+
+
+
+
