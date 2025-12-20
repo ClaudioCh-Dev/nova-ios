@@ -1,29 +1,30 @@
-//
-//  ProfileViewController.swift
-//  NovaMovil
-//
-//  Created by user288878 on 12/15/25.
-//
-
 import UIKit
 
 class ProfileViewController: UIViewController {
+    
+    
+    @IBOutlet weak var NombresView: UITextField!
+    
+    @IBOutlet weak var EmailVie: UITextField!
+    
+    @IBOutlet weak var BtnCerrar: UIButton!
+    
+    var usuario: UserDetail?
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
 
-        // Do any additional setup after loading the view.
+        if let usuario = usuario {
+             NombresView.text = usuario.fullName
+             EmailVie.text = usuario.email
+         }
     }
     
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
+    @IBAction func cerrarSesion(_ sender: Any) {
+        UserDefaults.standard.removeObject(forKey: "userToken")
+        UserDefaults.standard.removeObject(forKey: "userId")
+        dismiss(animated: true)
     }
-    */
 
 }

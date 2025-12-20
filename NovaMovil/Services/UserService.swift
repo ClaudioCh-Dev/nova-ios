@@ -60,4 +60,28 @@ class UserService {
             }
         }.resume()
     }
+    func actualizarUsuario(
+        id: Int,
+        token: String,
+        datos: UpdateUserRequest,
+        completion: @escaping (Result<UserDetail, Error>) -> Void
+    ) {
+        let urlString = "\(Conexion.baseURL)/api/users/\(id)"
+        guard let url = URL(string: urlString) else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        do {
+            request.httpBody = try JSONEncoder().encode(datos)
+        } catch {
+            completion(.failure(error))
+            return
+        }
+
+        realizarPeticion(request: request, tipo: UserDetail.self, completion: completion)
+    }
+
 }
