@@ -119,6 +119,8 @@ class ContactsViewController: UIViewController, UITableViewDataSource, UITableVi
             }
         case .denied, .restricted:
             mostrarAlertaPermisos()
+        case .limited:
+            print("algo")
         @unknown default:
             break
         }

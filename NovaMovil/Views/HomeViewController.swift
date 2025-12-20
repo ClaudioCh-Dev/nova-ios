@@ -177,7 +177,7 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
 extension HomeViewController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
-        let region = MKCoordinateRegion(
+        _ = MKCoordinateRegion(
             center: location.coordinate,
             latitudinalMeters: 500,
             longitudinalMeters: 500

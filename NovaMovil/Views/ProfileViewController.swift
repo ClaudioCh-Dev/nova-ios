@@ -8,8 +8,6 @@ class ProfileViewController: UIViewController {
     @IBOutlet weak var EmailVie: UITextField!
     
     @IBOutlet weak var BtnCerrar: UIButton!
-    
-    var usuario: UserDetail?
 
     @IBOutlet weak var profileImageView: UIImageView!
     
@@ -17,7 +15,7 @@ class ProfileViewController: UIViewController {
     
     @IBOutlet weak var emailTextField: UITextField!
     
-    private var usuario: UserDetail?
+    var usuario: UserDetail?
     private var token: String?
     private var userId: Int = 0
     
