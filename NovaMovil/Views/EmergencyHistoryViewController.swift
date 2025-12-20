@@ -9,6 +9,11 @@ import UIKit
 
 class EmergencyHistoryViewController: UIViewController {
 
+    @IBOutlet weak var historyTableView: UITableView!
+    
+    
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 

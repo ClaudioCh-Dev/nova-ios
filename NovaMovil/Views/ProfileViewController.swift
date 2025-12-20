@@ -9,6 +9,13 @@ import UIKit
 
 class ProfileViewController: UIViewController {
 
+    @IBOutlet weak var profileImageView: UIImageView!
+    
+    @IBOutlet weak var nameTextField: UITextField!
+    
+    @IBOutlet weak var emailTextField: UITextField!
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -25,5 +32,9 @@ class ProfileViewController: UIViewController {
         // Pass the selected object to the new view controller.
     }
     */
-
+    @IBAction func editButtonTapped(_ sender: Any) {
+    }
+    
+    @IBAction func closeSessionButtonTapped(_ sender: Any) {
+    }
 }
