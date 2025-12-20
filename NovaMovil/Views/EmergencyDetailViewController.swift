@@ -6,9 +6,20 @@
 //
 
 import UIKit
+import MapKit
 
 class EmergencyDetailViewController: UIViewController {
-
+    
+    
+    @IBOutlet weak var dayLabel: UILabel!
+    
+    
+    @IBOutlet weak var scheduleLabel: UILabel!
+    
+    @IBOutlet weak var mapMapView: MKMapView!
+    
+    
+    	
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -16,6 +27,8 @@ class EmergencyDetailViewController: UIViewController {
     }
     
 
+    @IBAction func pdfButtonTapped(_ sender: Any) {
+    }
     /*
     // MARK: - Navigation
 
