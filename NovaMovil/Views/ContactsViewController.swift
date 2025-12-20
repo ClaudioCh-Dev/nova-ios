@@ -1,127 +1,152 @@
 import UIKit
 import Contacts
-import ContactsUI
 
 class ContactsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
 
     @IBOutlet weak var contactosTable: UITableView!
     
-    var contactos: [CNContact] = [] // Aquí guardamos los contactos
-    var usuarioSesion: UserDetail?   // 👈 AÑADE ESTO
-
-    // Agrega esta propiedad al inicio de la clase
+    var contactos: [CNContact] = []
+    var usuarioSesion: UserDetail?
+    
+    // Closure para devolver el contacto seleccionado al Home
     var contactoSeleccionado: ((CNContact) -> Void)?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Configuración básica de la tabla
         contactosTable.dataSource = self
         contactosTable.delegate = self
         
-        // Registrar celda si es que no estás usando prototype cell
-        // contactosTable.register(UITableViewCell.self, forCellReuseIdentifier: "celdaContacto")
+        // Estilo de la tabla
+        contactosTable.rowHeight = 80 // Altura para que se vea bien el avatar
+        contactosTable.separatorStyle = .none // Quitamos líneas feas, usamos diseño limpio
         
-        // Gestos
-        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
-        longPress.minimumPressDuration = 1.0
-        contactosTable.addGestureRecognizer(longPress)
-        
+        // Pedir permisos y cargar
         requestContactsAccess()
     }
     
     // MARK: - UITableViewDataSource
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return contactos.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-
+        // Usamos el identificador que puse en el XML
         let cell = tableView.dequeueReusableCell(withIdentifier: "celdaContacto", for: indexPath)
         let contacto = contactos[indexPath.row]
-        cell.textLabel?.text = "\(contacto.givenName) \(contacto.familyName)"
+        
+        // --- CONEXIÓN CON EL DISEÑO XML USANDO TAGS ---
+        // Tag 100: Label de Iniciales (Dentro del círculo)
+        // Tag 101: Label del Nombre
+        // Tag 102: Label del Teléfono
+        
+        // 1. Configurar Iniciales y Avatar
+        if let initialsLabel = cell.viewWithTag(100) as? UILabel {
+            let letters = (contacto.givenName.prefix(1) + contacto.familyName.prefix(1)).uppercased()
+            initialsLabel.text = letters.isEmpty ? "?" : letters
+            
+            // Hacemos el círculo perfecto por código
+            if let avatarContainer = initialsLabel.superview {
+                avatarContainer.layer.cornerRadius = avatarContainer.frame.height / 2
+                avatarContainer.clipsToBounds = true
+            }
+        }
+        
+        // 2. Configurar Nombre
+        if let nameLabel = cell.viewWithTag(101) as? UILabel {
+            nameLabel.text = "\(contacto.givenName) \(contacto.familyName)"
+        }
+        
+        // 3. Configurar Teléfono
+        if let phoneLabel = cell.viewWithTag(102) as? UILabel {
+            if let numero = contacto.phoneNumbers.first?.value.stringValue {
+                phoneLabel.text = numero
+            } else {
+                phoneLabel.text = "Sin número disponible"
+            }
+        }
+        
         return cell
     }
     
-    // MARK: - Gestos
-    @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        let point = gesture.location(in: contactosTable)
-        if let indexPath = contactosTable.indexPathForRow(at: point), gesture.state == .began {
-            let contact = contactos[indexPath.row]
+    // MARK: - UITableViewDelegate (La Funcionalidad de Agregar)
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        // Efecto visual de selección
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        let contacto = contactos[indexPath.row]
+        
+        // Mostrar alerta de confirmación profesional
+        let alerta = UIAlertController(
+            title: "Agregar Contacto",
+            message: "¿Deseas agregar a \(contacto.givenName) a tu red de seguridad?",
+            preferredStyle: .actionSheet
+        )
+        
+        let accionAgregar = UIAlertAction(title: "Sí, agregar", style: .default) { _ in
+            // 1. Ejecutamos el closure para avisar a HomeViewController
+            self.contactoSeleccionado?(contacto)
             
-            let alert = UIAlertController(title: contact.givenName, message: "Opciones", preferredStyle: .actionSheet)
-            alert.addAction(UIAlertAction(title: "Poner como predeterminado", style: .default) { _ in
-                self.agregarPredeterminado(contact)
-            })
-            alert.addAction(UIAlertAction(title: "Cancelar", style: .cancel))
-            
-            present(alert, animated: true)
+            // 2. Cerramos la pantalla
+            self.dismiss(animated: true)
         }
+        
+        let accionCancelar = UIAlertAction(title: "Cancelar", style: .cancel)
+        
+        // Color verde para la acción positiva (Estilo Nova)
+        accionAgregar.setValue(UIColor(red: 16/255, green: 185/255, blue: 129/255, alpha: 1), forKey: "titleTextColor")
+        
+        alerta.addAction(accionAgregar)
+        alerta.addAction(accionCancelar)
+        
+        present(alerta, animated: true)
     }
     
-    // MARK: - Acceso a contactos
+    // MARK: - Acceso a Contactos (Tu lógica original optimizada)
     private func requestContactsAccess() {
         let store = CNContactStore()
-           let status = CNContactStore.authorizationStatus(for: .contacts)
+        let status = CNContactStore.authorizationStatus(for: .contacts)
 
-           switch status {
-
-           case .authorized:
-               fetchContacts(store: store)
-
-           case .notDetermined:
-               store.requestAccess(for: .contacts) { granted, _ in
-                   if granted {
-                       self.fetchContacts(store: store)
-                   }
-               }
-
-           case .denied, .restricted:
-               print("Permiso de contactos denegado")
-
-           @unknown default:
-               break
-           }
+        switch status {
+        case .authorized:
+            fetchContacts(store: store)
+        case .notDetermined:
+            store.requestAccess(for: .contacts) { granted, _ in
+                if granted { self.fetchContacts(store: store) }
+            }
+        case .denied, .restricted:
+            mostrarAlertaPermisos()
+        @unknown default:
+            break
+        }
     }
     
     private func fetchContacts(store: CNContactStore) {
-        let keys = [
-            CNContactGivenNameKey,
-            CNContactFamilyNameKey,
-            CNContactPhoneNumbersKey
-        ]
+        let keys = [CNContactGivenNameKey, CNContactFamilyNameKey, CNContactPhoneNumbersKey] as [CNKeyDescriptor]
+        let request = CNContactFetchRequest(keysToFetch: keys)
         
-        let request = CNContactFetchRequest(keysToFetch: keys as [CNKeyDescriptor])
-        
-        DispatchQueue.global(qos: .userInitiated).async { // hilo de fondo
+        DispatchQueue.global(qos: .userInitiated).async {
             var fetchedContacts: [CNContact] = []
-            
-            do {
-                try store.enumerateContacts(with: request) { contact, _ in
+            try? store.enumerateContacts(with: request) { contact, _ in
+                // Filtro opcional: Solo mostrar contactos con número de teléfono
+                if !contact.phoneNumbers.isEmpty {
                     fetchedContacts.append(contact)
                 }
-                
-                // Actualizamos la UI en el main thread
-                DispatchQueue.main.async {
-                    self.contactos = fetchedContacts
-                    self.contactosTable.reloadData()
-                }
-                
-            } catch {
-                print("Error al leer contactos:", error)
+            }
+            
+            DispatchQueue.main.async {
+                self.contactos = fetchedContacts
+                self.contactosTable.reloadData()
             }
         }
     }
-
-
-    // MARK: - Función de ejemplo para predeterminado
-    private func agregarPredeterminado(_ contact: CNContact) {
-        print("Contacto predeterminado: \(contact.givenName)")
-           
-           // Avisamos a HomeViewController
-           contactoSeleccionado?(contact)
-           
-           // Cerramos la vista
-           dismiss(animated: true)
-
+    
+    private func mostrarAlertaPermisos() {
+        let alert = UIAlertController(title: "Permiso Requerido", message: "Necesitamos acceso a tus contactos para añadirlos a la red de seguridad.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Ok", style: .default))
+        present(alert, animated: true)
     }
 }

@@ -10,6 +10,13 @@ struct UserDetail: Codable {
 }
 
 
+struct UpdateUserRequest: Codable {
+    let fullName: String
+    let email: String
+    let phone: String
+}
+
+
 
 
 
