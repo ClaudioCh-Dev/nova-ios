@@ -19,7 +19,7 @@ class EmergencyHistoryViewController: UIViewController {
         super.viewDidLoad()
         historyTableView.delegate = self
         historyTableView.dataSource = self
-        historyTableView.register(UITableViewCell.self, forCellReuseIdentifier: "EventCell")
+        // Si usas prototipo en storyboard, no registres celda aquí.
         cargarEventos()
     }
     
@@ -42,7 +42,9 @@ extension EmergencyHistoryViewController: UITableViewDataSource, UITableViewDele
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "EventCell", for: indexPath)
+        // Fallback: si no existe prototipo con identifier "EventCell", crea una celda estilo subtitle.
+        let cell = tableView.dequeueReusableCell(withIdentifier: "EventCell")
+            ?? UITableViewCell(style: .subtitle, reuseIdentifier: "EventCell")
         let evt = eventos[indexPath.row]
         cell.textLabel?.text = "\(evt.type) • \(formatearFecha(evt.createdAt, formato: "dd/MM/yyyy HH:mm"))"
         cell.detailTextLabel?.text = evt.status
@@ -53,20 +55,26 @@ extension EmergencyHistoryViewController: UITableViewDataSource, UITableViewDele
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let evt = eventos[indexPath.row]
-
-        if let vc = storyboard?.instantiateViewController(withIdentifier: "EmergencyDetailViewController") as? EmergencyDetailViewController {
-            vc.evento = evt
-            navigationController?.pushViewController(vc, animated: true)
-        } else {
-            performSegue(withIdentifier: "detalleEmergenciaSegue", sender: evt)
-        }
+        // Usa segue configurado en storyboard para evitar excepciones por ID inexistente.
+        performSegue(withIdentifier: "detalleEmergenciaSegue", sender: evt)
     }
 }
 
 private extension EmergencyHistoryViewController {
     var token: String? { UserDefaults.standard.string(forKey: "userToken") }
     var userId: Int { UserDefaults.standard.integer(forKey: "userId") }
+    var eventos: [EmergencyEventResponse] = []
 
+// Pasar el evento seleccionado al detalle
+extension EmergencyHistoryViewController {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "detalleEmergenciaSegue",
+           let destino = segue.destination as? EmergencyDetailViewController,
+           let evento = sender as? EmergencyEventResponse {
+            destino.evento = evento
+        }
+    }
+}
     func cargarEventos() {
         guard let tk = token, userId != 0 else { return }
         EmergencyEventService.shared.obtenerEventosPorUsuario(userId: userId, token: tk) { [weak self] result in
