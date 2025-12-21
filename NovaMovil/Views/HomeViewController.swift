@@ -40,12 +40,13 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         actualizarUIBotonPrincipal()
         cargarContactosLocales()
         NotificationCenter.default.addObserver(self, selector: #selector(handleEmergencyShortcut), name: NSNotification.Name("TriggerNovaEmergency"), object: nil)
-            }
+    }
+    
     @objc func handleEmergencyShortcut() {
-            if !isServiceActive {
-                funcionBtnDesactivar(btnDesactivar)
-            }
+        if !isServiceActive {
+            funcionBtnDesactivar(btnDesactivar)
         }
+    }
 
     func cargarContactosLocales() {
         let fetchRequest: NSFetchRequest<ContactoEntity> = ContactoEntity.fetchRequest()
@@ -172,7 +173,6 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
             return
         }
 
-        // Escalar permisos si es necesario para background
         let status = locationManager.authorizationStatus
         if status == .authorizedWhenInUse {
             locationManager.requestAlwaysAuthorization()
@@ -193,7 +193,6 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
                 print("✅ Evento creado ID: \(response.id)")
                 
                 self?.guardarHistorialLocal(id: Int64(response.id), tipo: "Pánico")
-                // Preparar manager para background
                 DispatchQueue.main.async {
                     self?.locationManager.allowsBackgroundLocationUpdates = true
                     if #available(iOS 11.0, *) { self?.locationManager.showsBackgroundLocationIndicator = true }
@@ -208,11 +207,9 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     }
     
     func iniciarRastreoUbicacion() {
-        // Evitar timers duplicados
         locationUpdateTimer?.invalidate()
         locationUpdateTimer = nil
 
-        // Respetar la configuración de ubicación y permisos del sistema
         guard ConfiguracionViewController.isLocationEnabled() else {
             print("⚠️ Rastreo no iniciado: ubicación desactivada en ajustes de la app")
             return
@@ -240,7 +237,6 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         guard let eventId = currentEventId,
               let token = UserDefaults.standard.string(forKey: "userToken") else { return }
 
-        // Throttling por tiempo y distancia
         let now = Date()
         if let last = lastSentAt, now.timeIntervalSince(last) < minSendInterval {
             return
@@ -257,7 +253,6 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
             longitude: location.coordinate.longitude
         )
 
-        // Asegurar tiempo de ejecución en background para completar el POST
         if bgTaskId == .invalid {
             bgTaskId = UIApplication.shared.beginBackgroundTask(withName: "SendEmergencyLocation") { [weak self] in
                 if let id = self?.bgTaskId { UIApplication.shared.endBackgroundTask(id) }
@@ -318,7 +313,6 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         let lon = locationManager.location?.coordinate.longitude ?? 0.0
         let link = "https://maps.google.com/?q=\(lat),\(lon)"
         
-        // 4. Body JSON
         let body: [String: Any] = [
             "phoneNumbers": numeros,
             "userName": "Usuario Nova",
@@ -327,7 +321,6 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         
-        // 5. Enviar
         URLSession.shared.dataTask(with: request) { data, _, error in
             if error == nil {
                 print("✅ Alerta de WhatsApp enviada al backend")
@@ -420,7 +413,6 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
 extension HomeViewController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
-        // Enviar por callback de CoreLocation (funciona en background)
         if isServiceActive && ConfiguracionViewController.isLocationEnabled() {
             enviarUbicacionActual(location)
         }
@@ -435,14 +427,53 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "celdaContacto", for: indexPath) as! ContactCellCollectionViewCell
         let contacto = contactosGuardados[indexPath.item]
-        cell.lblNombre.text = contacto.nombre
-        if let nombre = contacto.nombre?.first {
-            cell.lblLetrsNombre.text = String(nombre)
+        
+        // Extraer iniciales del nombre completo
+        let nombreCompleto = (contacto.nombre ?? "").trimmingCharacters(in: .whitespaces)
+        let palabras = nombreCompleto.components(separatedBy: " ").filter { !$0.isEmpty }
+        var iniciales = ""
+        
+        if palabras.count >= 2 {
+            // Si hay nombre y apellido, tomar primera letra de cada uno
+            iniciales = String(palabras[0].prefix(1)) + String(palabras[1].prefix(1))
+        } else if !palabras.isEmpty {
+            // Si solo hay una palabra, tomar las dos primeras letras
+            iniciales = String(palabras[0].prefix(2))
         }
+        
+        // Mostrar solo el primer nombre
+        let primerNombre = palabras.first ?? (contacto.nombre ?? "")
+        
+        // Configurar el label de nombre (debajo del círculo)
+        cell.lblNombre.text = primerNombre
+        cell.lblNombre.font = UIFont.systemFont(ofSize: 11)
+        cell.lblNombre.textAlignment = .center
+        cell.lblNombre.numberOfLines = 1
+        cell.lblNombre.adjustsFontSizeToFitWidth = true
+        cell.lblNombre.minimumScaleFactor = 0.8
+        cell.lblNombre.textColor = .label
+        
+        // Configurar el círculo con las iniciales
+        cell.lblLetrsNombre.text = iniciales.uppercased()
+        cell.lblLetrsNombre.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        cell.lblLetrsNombre.textColor = .white
+        cell.lblLetrsNombre.textAlignment = .center
+        cell.lblLetrsNombre.backgroundColor = UIColor(red: 0.06, green: 0.42, blue: 0.31, alpha: 1.0) // Verde oscuro
+        
+        // Hacer el círculo después de que la celda tenga su tamaño final
+        DispatchQueue.main.async {
+            cell.lblLetrsNombre.layer.cornerRadius = cell.lblLetrsNombre.frame.width / 2
+            cell.lblLetrsNombre.clipsToBounds = true
+        }
+        
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: 60, height: 60)
+        return CGSize(width: 70, height: 90)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+        return 10
     }
 }
