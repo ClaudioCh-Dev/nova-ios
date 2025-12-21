@@ -51,16 +51,31 @@ class EmergencyHistoryViewController: UIViewController {
     }
 
     private func formatearFecha(_ iso: String, formato: String) -> String {
+        // Intento 1: ISO8601 con fracción
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         var fecha = isoFormatter.date(from: iso)
+        // Intento 2: "yyyy-MM-dd'T'HH:mm:ss" (LocalDateTime sin zona)
         if fecha == nil {
-            let alt = DateFormatter()
-            alt.locale = Locale(identifier: "en_US_POSIX")
-            alt.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-            fecha = alt.date(from: iso)
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+            fecha = df.date(from: iso)
         }
-
+        // Intento 3: "yyyy-MM-dd'T'HH:mm:ss.SSS" (con milisegundos)
+        if fecha == nil {
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+            fecha = df.date(from: iso)
+        }
+        // Intento 4: con zona "Z"
+        if fecha == nil {
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+            fecha = df.date(from: iso)
+        }
         guard let date = fecha else { return iso }
         let df = DateFormatter()
         df.locale = Locale(identifier: "es_PE")
@@ -81,7 +96,8 @@ extension EmergencyHistoryViewController: UITableViewDataSource, UITableViewDele
             ?? UITableViewCell(style: .subtitle, reuseIdentifier: "EventCell")
 
         let evt = eventos[indexPath.row]
-        cell.textLabel?.text = "\(evt.type) • \(formatearFecha(evt.createdAt, formato: "dd/MM/yyyy HH:mm"))"
+        let titulo = (evt.type ?? "Evento") + " • " + formatearFecha(evt.createdAt, formato: "dd/MM/yyyy HH:mm")
+        cell.textLabel?.text = titulo
         cell.detailTextLabel?.text = evt.status
         cell.accessoryType = .disclosureIndicator
         return cell
