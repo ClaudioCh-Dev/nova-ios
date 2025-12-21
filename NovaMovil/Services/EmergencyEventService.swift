@@ -156,11 +156,36 @@ class EmergencyEventService {
                 guard let data = data else { return }
 
                 do {
-                    let decoded = try JSONDecoder().decode(T.self, from: data)
+                    let decoder = JSONDecoder()
+                    // No estrategia de fechas: usamos String en modelos
+                    let decoded = try decoder.decode(T.self, from: data)
                     completion(.success(decoded))
                 } catch {
+                    #if DEBUG
+                    let raw = String(data: data, encoding: .utf8) ?? "<binario>"
+                    let detalle = self.descripcionDecodingError(error)
+                    print("[EmergencyEventService] Error decodificando: \(detalle)\nJSON: \n\(raw)")
+                    #endif
                     completion(.failure(error))
                 }
             }.resume()
+        }
+
+        private func descripcionDecodingError(_ error: Error) -> String {
+            if let e = error as? DecodingError {
+                switch e {
+                case .keyNotFound(let key, let ctx):
+                    return "keyNotFound(\(key.stringValue)) en \(ctx.codingPath.map{ $0.stringValue }.joined(separator: "."))"
+                case .valueNotFound(let type, let ctx):
+                    return "valueNotFound(\(type)) en \(ctx.codingPath.map{ $0.stringValue }.joined(separator: "."))"
+                case .typeMismatch(let type, let ctx):
+                    return "typeMismatch(\(type)) en \(ctx.codingPath.map{ $0.stringValue }.joined(separator: "."))"
+                case .dataCorrupted(let ctx):
+                    return "dataCorrupted: \(ctx.debugDescription)"
+                @unknown default:
+                    return "DecodingError desconocido"
+                }
+            }
+            return error.localizedDescription
         }
     }
