@@ -63,6 +63,7 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     }
 
     @IBAction func funcionBtnConfiguracion(){
+        guard let usuario = usuarioSesion else { return }
         performSegue(withIdentifier: "configuracionSegue", sender: nil)
     }
     

@@ -35,22 +35,12 @@ class ProfileViewController: UIViewController {
         cargarUsuario()
     }
     
-    @IBAction func cerrarSesion(_ sender: Any) {
+    /*@IBAction func cerrarSesion(_ sender: Any) {
         UserDefaults.standard.removeObject(forKey: "userToken")
         UserDefaults.standard.removeObject(forKey: "userId")
         dismiss(animated: true)
-    }
+    }*/
     
-    @IBAction func editButtonTapped(_ sender: Any) {
-        let nuevo = !nameTextField.isEnabled
-        nameTextField.isEnabled = nuevo
-        emailTextField.isEnabled = nuevo
-        if nuevo {
-            nameTextField.becomeFirstResponder()
-        } else {
-            view.endEditing(true)
-        }
-    }
     
     @IBAction func closeSessionButtonTapped(_ sender: Any) {
         let alerta = UIAlertController(title: "Cerrar sesión", message: "¿Desea salir de su cuenta?", preferredStyle: .alert)
