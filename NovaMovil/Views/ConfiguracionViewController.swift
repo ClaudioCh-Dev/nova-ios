@@ -8,23 +8,32 @@ class ConfiguracionViewController: UIViewController {
     @IBOutlet weak var locationSwitch: UISwitch!
     @IBOutlet weak var recordingSwitch: UISwitch!
     
+    @IBOutlet weak var dropdownButton: UIButton!
+    @IBOutlet weak var dropdownChevron: UIImageView!
+    @IBOutlet weak var dropdownPanel: UIView!
+    @IBOutlet weak var audioOptionButton: UIButton!
+    @IBOutlet weak var photoOptionButton: UIButton!
+    @IBOutlet weak var dropdownContainer: UIView!
+    
     // MARK: - Properties
     private let locationManager = CLLocationManager()
     private let defaults = UserDefaults.standard
     
-    // Keys para UserDefaults
     private let locationEnabledKey = "locationEnabled"
     private let recordingEnabledKey = "recordingEnabled"
+    private let selectedTypeKey = "selectedType"
     
     private var isMonitoringScreen = false
+    private var isDropdownOpen = false
+    private var dropdownContainerHeightConstraint: NSLayoutConstraint?
     
-    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupNavigationBar()
         setupLocationManager()
         setupSwitches()
+        setupDropdown()
         loadSavedSettings()
         setupScreenCaptureMonitoring()
     }
@@ -52,6 +61,70 @@ class ConfiguracionViewController: UIViewController {
         
         locationSwitch.onTintColor = .systemTeal
         recordingSwitch.onTintColor = .systemTeal
+    }
+    
+    private func setupDropdown() {
+        dropdownButton.addTarget(self, action: #selector(toggleDropdown), for: .touchUpInside)
+        
+        audioOptionButton.addTarget(self, action: #selector(audioOptionTapped), for: .touchUpInside)
+        photoOptionButton.addTarget(self, action: #selector(photoOptionTapped), for: .touchUpInside)
+        
+        dropdownPanel.isHidden = true
+        dropdownPanel.alpha = 0
+        
+        if let heightConstraint = dropdownContainer.constraints.first(where: { $0.firstAttribute == .height }) {
+            dropdownContainerHeightConstraint = heightConstraint
+        }
+        loadSelectedType()
+    }
+    
+    // MARK: - Dropdown Actions
+    @objc private func toggleDropdown() {
+        isDropdownOpen.toggle()
+        
+        UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5, options: .curveEaseInOut) {
+            if self.isDropdownOpen {
+                self.dropdownPanel.isHidden = false
+                self.dropdownPanel.alpha = 1
+                self.dropdownChevron.transform = CGAffineTransform(rotationAngle: .pi)
+                self.dropdownContainerHeightConstraint?.constant = 184 // 80 + 8 + 96
+            } else {
+                self.dropdownPanel.alpha = 0
+                self.dropdownChevron.transform = .identity
+                self.dropdownContainerHeightConstraint?.constant = 80
+            }
+            self.view.layoutIfNeeded()
+        } completion: { _ in
+            if !self.isDropdownOpen {
+                self.dropdownPanel.isHidden = true
+            }
+        }
+    }
+    
+    @objc private func audioOptionTapped() {
+        selectOption(type: "audio", displayText: "🎤 Audio")
+    }
+    
+    @objc private func photoOptionTapped() {
+        selectOption(type: "photo", displayText: "📸 Foto")
+    }
+    
+    private func selectOption(type: String, displayText: String) {
+        dropdownButton.setTitle(displayText, for: .normal)
+
+        defaults.set(type, forKey: selectedTypeKey)
+        defaults.set(displayText, forKey: "\(selectedTypeKey)_display")
+        defaults.synchronize()
+
+        toggleDropdown()
+    
+        showSuccessMessage("Tipo seleccionado: \(displayText)")
+    }
+    
+    private func loadSelectedType() {
+        if let savedDisplay = defaults.string(forKey: "\(selectedTypeKey)_display") {
+            dropdownButton.setTitle(savedDisplay, for: .normal)
+        }
     }
     
     private func setupScreenCaptureMonitoring() {
@@ -142,7 +215,6 @@ class ConfiguracionViewController: UIViewController {
             locationSwitch.isOn = false
             saveSettings()
         } else if status == .authorizedWhenInUse || status == .authorizedAlways {
-            // Si tiene permisos y el switch está ON, asegurar que esté rastreando
             if locationSwitch.isOn {
                 locationManager.startUpdatingLocation()
             }
@@ -273,6 +345,10 @@ class ConfiguracionViewController: UIViewController {
         return UIScreen.main.isCaptured
     }
     
+    static func getSelectedType() -> String? {
+        return UserDefaults.standard.string(forKey: "selectedType")
+    }
+    
     // MARK: - Deinitializer
     deinit {
         NotificationCenter.default.removeObserver(self)
@@ -281,8 +357,6 @@ class ConfiguracionViewController: UIViewController {
     @IBAction func profileTapped(_ sender: Any) {
         performSegue(withIdentifier: "editProfileSegue", sender: usuario)
     }
-    
-    
 }
 
 // MARK: - CLLocationManagerDelegate
@@ -301,9 +375,6 @@ extension ConfiguracionViewController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("❌ Error de ubicación: \(error.localizedDescription)")
     }
-    
-    
-    
 }
 
 // MARK: - Notification Names
