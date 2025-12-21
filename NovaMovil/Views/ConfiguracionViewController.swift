@@ -3,6 +3,7 @@ import CoreLocation
 
 class ConfiguracionViewController: UIViewController {
     
+    var usuario: UserDetail?
     // MARK: - IBOutlets
     @IBOutlet weak var locationSwitch: UISwitch!
     @IBOutlet weak var recordingSwitch: UISwitch!
@@ -276,6 +277,12 @@ class ConfiguracionViewController: UIViewController {
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
+    
+    @IBAction func profileTapped(_ sender: Any) {
+        performSegue(withIdentifier: "editProfileSegue", sender: usuario)
+    }
+    
+    
 }
 
 // MARK: - CLLocationManagerDelegate
@@ -294,6 +301,9 @@ extension ConfiguracionViewController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("❌ Error de ubicación: \(error.localizedDescription)")
     }
+    
+    
+    
 }
 
 // MARK: - Notification Names
