@@ -1,4 +1,5 @@
 import UIKit
+import CoreData
 import MapKit
 import CoreLocation
 import AudioToolbox
@@ -22,6 +23,9 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     var isServiceActive: Bool = false
     var soundTimer: Timer?
     var contactos: [ContactoUI] = []
+    var currentEventId: Int?
+    var locationUpdateTimer: Timer?
+    var contactosGuardados: [ContactoEntity] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,6 +33,32 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         setupCollectionView()
         actualizarEstiloModoDiscreto()
         actualizarUIBotonPrincipal()
+        cargarContactosLocales()
+        NotificationCenter.default.addObserver(self, selector: #selector(handleEmergencyShortcut), name: NSNotification.Name("TriggerNovaEmergency"), object: nil)
+            }
+    @objc func handleEmergencyShortcut() {
+            if !isServiceActive {
+                funcionBtnDesactivar(btnDesactivar)
+            }
+        }
+
+    func cargarContactosLocales() {
+        let fetchRequest: NSFetchRequest<ContactoEntity> = ContactoEntity.fetchRequest()
+        do {
+            contactosGuardados = try CoreDataManager.shared.context.fetch(fetchRequest)
+            self.panelContactos.reloadData()
+        } catch {
+            print("Error cargando contactos: \(error)")
+        }
+    }
+
+    func guardarContactoEnCoreData(nombre: String, telefono: String, id: String) {
+        let nuevoContacto = ContactoEntity(context: CoreDataManager.shared.context)
+        nuevoContacto.nombre = nombre
+        nuevoContacto.telefono = telefono
+        nuevoContacto.id = id
+        CoreDataManager.shared.saveContext()
+        cargarContactosLocales()
     }
 
     private func setupMap() {
@@ -63,7 +93,7 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     }
 
     @IBAction func funcionBtnConfiguracion(){
-        guard let usuario = usuarioSesion else { return }
+        guard usuarioSesion != nil else { return }
         performSegue(withIdentifier: "configuracionSegue", sender: nil)
     }
     
@@ -106,14 +136,139 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         let modoDiscreto = UserDefaults.standard.bool(forKey: "modoDiscreto")
         
         if isServiceActive {
-            if !modoDiscreto {
-                iniciarAlarmaSistema()
-            }
+            print("🚨 INICIANDO PROTOCOLO DE EMERGENCIA")
+            
+            if !modoDiscreto { iniciarAlarmaSistema() }
+            
+            activarEmergenciaAPI()
+            enviarMensajesWhatsApp()
+            
+            actualizarUIBotonPrincipal()
+            
         } else {
+            print("✅ FINALIZANDO EMERGENCIA")
+            
             detenerAlarmaSistema()
+            locationUpdateTimer?.invalidate()
+            
+            if let eventId = currentEventId {
+                cerrarEmergenciaAPI(eventId: eventId)
+            }
+            
+            actualizarUIBotonPrincipal()
+        }
+    }
+    
+    func activarEmergenciaAPI() {
+        guard let token = UserDefaults.standard.string(forKey: "userToken"),
+              let userId = UserDefaults.standard.integer(forKey: "userId") as? Int,
+              let location = locationManager.location else {
+            print("❌ Datos faltantes para API")
+            return
         }
         
-        actualizarUIBotonPrincipal()
+        let request = CreateEmergencyEventRequest(
+            userId: userId,
+            type: "TAP",
+            description: "Emergencia activada por usuario",
+            latitude: location.coordinate.latitude,
+            longitude: location.coordinate.longitude
+        )
+        
+        EmergencyEventService.shared.crearEvento(datos: request, token: token) { [weak self] result in
+            switch result {
+            case .success(let response):
+                self?.currentEventId = response.id
+                print("✅ Evento creado ID: \(response.id)")
+                
+                self?.guardarHistorialLocal(id: Int64(response.id), tipo: "Pánico")
+                self?.iniciarRastreoUbicacion()
+                
+            case .failure(let error):
+                print("❌ Error creando evento: \(error)")
+            }
+        }
+    }
+    
+    func iniciarRastreoUbicacion() {
+        locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
+            self?.enviarUbicacionActual()
+        }
+    }
+    
+    func enviarUbicacionActual() {
+        guard let eventId = currentEventId,
+              let location = locationManager.location,
+              let token = UserDefaults.standard.string(forKey: "userToken") else { return }
+        
+        let request = CreateEmergencyLocationRequest(
+            eventId: eventId,
+            latitude: location.coordinate.latitude,
+            longitude: location.coordinate.longitude,
+            timestamp: ISO8601DateFormatter().string(from: Date())
+        )
+        
+        EmergencyLocationService.shared.crearUbicacionEmergencia(datos: request, token: token) { result in
+            if case .failure(let error) = result {
+                print("⚠️ Error enviando trace: \(error)")
+            } else {
+                print("📍 Trace enviado")
+            }
+        }
+    }
+
+    func cerrarEmergenciaAPI(eventId: Int) {
+        guard let token = UserDefaults.standard.string(forKey: "userToken") else { return }
+        
+        EmergencyEventService.shared.resolverEvento(id: eventId, token: token) { result in
+            switch result {
+            case .success: print("✅ Evento cerrado en servidor")
+            case .failure(let error): print("❌ Error cerrando evento: \(error)")
+            }
+        }
+    }
+
+    func guardarHistorialLocal(id: Int64, tipo: String) {
+        let historial = HistorialEntity(context: CoreDataManager.shared.context)
+        historial.eventId = id
+        historial.fecha = Date()
+        historial.tipo = tipo
+        CoreDataManager.shared.saveContext()
+    }
+
+    func enviarMensajesWhatsApp() {
+        guard let token = UserDefaults.standard.string(forKey: "userToken") else { return }
+        let numeros = contactosGuardados.compactMap { $0.telefono }
+        
+        guard !numeros.isEmpty else { return }
+        
+        let url = URL(string: "\(Conexion.baseURL)/api/notifications/broadcast")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        let lat = locationManager.location?.coordinate.latitude ?? 0.0
+        let lon = locationManager.location?.coordinate.longitude ?? 0.0
+        let link = "https://maps.google.com/?q=\(lat),\(lon)"
+        
+        // 4. Body JSON
+        let body: [String: Any] = [
+            "phoneNumbers": numeros,
+            "userName": "Usuario Nova",
+            "googleMapsLink": link
+        ]
+        
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        // 5. Enviar
+        URLSession.shared.dataTask(with: request) { data, _, error in
+            if error == nil {
+                print("✅ Alerta de WhatsApp enviada al backend")
+            } else {
+                print("❌ Error enviando alerta: \(error!)")
+            }
+        }.resume()
     }
     
     private func actualizarUIBotonPrincipal() {
@@ -143,22 +298,43 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
     }
 
+    func formatearFecha(_ iso: String, formato: String) -> String {
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        isoFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+        
+        let isoFormatterSimple = ISO8601DateFormatter()
+        isoFormatterSimple.formatOptions = [.withInternetDateTime]
+        isoFormatterSimple.timeZone = TimeZone(secondsFromGMT: 0)
+        
+        let simpleFormatter = DateFormatter()
+        simpleFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        simpleFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+        
+        var fecha: Date? = isoFormatter.date(from: iso)
+        if fecha == nil { fecha = isoFormatterSimple.date(from: iso) }
+        if fecha == nil { fecha = simpleFormatter.date(from: String(iso.prefix(19))) }
+        
+        guard let date = fecha else { return iso }
+
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "es_PE")
+        df.dateFormat = formato
+        
+        return df.string(from: date).capitalized
+    }
+
     @IBAction func funcionBtnAgregarContacto(_ sender: UIButton) {
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         if let contactsVC = storyboard.instantiateViewController(withIdentifier: "ContactsViewController") as? ContactsViewController {
             contactsVC.usuarioSesion = self.usuarioSesion
             
             contactsVC.contactoSeleccionado = { [weak self] contact in
-                guard let self = self else { return }
+                let nombreCompleto = "\(contact.givenName) \(contact.familyName)"
+                let telefono = contact.phoneNumbers.first?.value.stringValue ?? ""
+                let id = contact.identifier
                 
-                if !self.contactos.contains(where: { $0.id == contact.identifier }) {
-                    let nuevoContacto = ContactoUI(
-                        nombre: "\(contact.givenName) \(contact.familyName)",
-                        id: contact.identifier
-                    )
-                    self.contactos.append(nuevoContacto)
-                    self.panelContactos.reloadData()
-                }
+                self?.guardarContactoEnCoreData(nombre: nombreCompleto, telefono: telefono, id: id)
             }
             contactsVC.modalPresentationStyle = .pageSheet
             present(contactsVC, animated: true)
@@ -188,14 +364,16 @@ extension HomeViewController: CLLocationManagerDelegate {
 
 extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return contactos.count
+        return contactosGuardados.count
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "celdaContacto", for: indexPath) as! ContactCellCollectionViewCell
-        let contacto = contactos[indexPath.item]
+        let contacto = contactosGuardados[indexPath.item]
         cell.lblNombre.text = contacto.nombre
-        cell.lblLetrsNombre.text = String(contacto.nombre.prefix(1))
+        if let nombre = contacto.nombre?.first {
+            cell.lblLetrsNombre.text = String(nombre)
+        }
         return cell
     }
     

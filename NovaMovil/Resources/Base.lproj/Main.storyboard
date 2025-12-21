@@ -11,10 +11,10 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--View Controller-->
+        <!--Onboarding View Controller-->
         <scene sceneID="ykP-iM-a9D">
             <objects>
-                <viewController storyboardIdentifier="OnboardingViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="q9h-7e-pX7" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="OnboardingViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="q9h-7e-pX7" customClass="OnboardingViewController" customModule="NovaMovil" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="t9p-ET-3sJ">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -247,6 +247,9 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="hwe-bV-5pH"/>
+                    <connections>
+                        <outlet property="scrollView" destination="scrollView" id="Uro-Kx-mqO"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Xeb-M5-eEe" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -550,31 +553,31 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="783"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="DETALLE DE EMERGENCIA" borderStyle="roundedRect" textAlignment="center" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Zig-Vh-lHV">
+                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="DETALLE DE EMERGENCIA" borderStyle="roundedRect" textAlignment="center" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Zig-Vh-lHV">
                                 <rect key="frame" x="0.0" y="69" width="393" height="50"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" red="0.023529411760000001" green="0.30588235289999999" blue="0.23137254900000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="50" id="LOx-Ik-RLC"/>
-                                    <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="50" id="zb9-ZY-IN4"/>
-                                </constraints>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="18"/>
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Emergencia del: 12/01/2025" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="y98-HL-fES">
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Emergencia del: 12/01/2025" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="y98-HL-fES">
                                 <rect key="frame" x="20" y="139" width="353" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="18"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Hora Inicio: 8:14 pm Hora Fin: 8:17pm" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3o7-ff-ZxL">
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Hora Inicio: 8:14 pm Hora Fin: 8:17pm" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3o7-ff-ZxL">
                                 <rect key="frame" x="20" y="170" width="353" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="18"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="MAPA DEL RECORRIDO" borderStyle="roundedRect" textAlignment="center" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="mC8-AD-WhF">
+                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="MAPA DEL RECORRIDO" borderStyle="roundedRect" textAlignment="center" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="mC8-AD-WhF">
                                 <rect key="frame" x="0.0" y="211" width="393" height="50"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" red="0.023529411760000001" green="0.30588235289999999" blue="0.23137254900000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="50" id="ohN-On-chK"/>
@@ -616,9 +619,9 @@
                     </view>
                     <navigationItem key="navigationItem" id="zGC-C4-3He"/>
                     <connections>
-                        <outlet property="dayLabel" destination="y98-HL-fES" id="zaG-Dg-Vba"/>
-                        <outlet property="mapMapView" destination="LQZ-Nf-0qa" id="5l0-M0-jw2"/>
-                        <outlet property="scheduleLabel" destination="3o7-ff-ZxL" id="uEu-vb-19a"/>
+                        <outlet property="dayLabel" destination="y98-HL-fES" id="Kyf-g5-teq"/>
+                        <outlet property="mapMapView" destination="LQZ-Nf-0qa" id="T2j-kO-whL"/>
+                        <outlet property="scheduleLabel" destination="3o7-ff-ZxL" id="o1E-c7-Iwa"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="H35-k1-6HO" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
@@ -1514,8 +1517,9 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="783"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="textures-treugolniki-fragmenti-obem-figuri-zelenii-53483" translatesAutoresizingMaskIntoConstraints="NO" id="vMu-57-Zhk">
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="vMu-57-Zhk">
                                 <rect key="frame" x="0.0" y="0.0" width="393" height="783"/>
+                                <color key="backgroundColor" red="0.14984216862363017" green="0.34982222286767672" blue="0.2759417722028043" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                 <constraints>
                                     <constraint firstAttribute="height" relation="lessThanOrEqual" constant="870" id="pnD-aP-lkg"/>
                                 </constraints>
@@ -1542,13 +1546,12 @@
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="18"/>
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="xZO-cD-lZx">
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" text="Registro de todas las alertas de emergencia activadas por el usuario." textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="xZO-cD-lZx">
                                 <rect key="frame" x="15" y="267" width="363" height="100"/>
                                 <color key="backgroundColor" systemColor="secondaryLabelColor"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="100" id="G4t-uM-Pgq"/>
                                 </constraints>
-                                <string key="text">Registro de todas las alertas de emergencia activadas por el usuario, donde se almacena el recorrido realizado, la hora de inicio y finalización del evento, y los contactos que fueron notificados por la aplicación.</string>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <fontDescription key="fontDescription" type="system" weight="medium" pointSize="14"/>
                                 <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
@@ -1809,7 +1812,6 @@
         <image name="plus.circle.fill" catalog="system" width="128" height="123"/>
         <image name="profile" width="5000" height="5000"/>
         <image name="registro" width="732" height="474"/>
-        <image name="textures-treugolniki-fragmenti-obem-figuri-zelenii-53483" width="1440" height="2560"/>
         <namedColor name="SecondaryText">
             <color red="0.49799999594688416" green="0.54900002479553223" blue="0.55299997329711914" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>

@@ -1,21 +1,15 @@
-//
-//  EmergencyHistoryViewController.swift
-//  NovaMovil
-//
-
 import UIKit
+import CoreData
 
 class EmergencyHistoryViewController: UIViewController {
 
     @IBOutlet weak var historyTableView: UITableView!
     private var eventos: [EmergencyEventSummary] = []
 
-    // MARK: - Ciclo de vida
     override func viewDidLoad() {
         super.viewDidLoad()
         historyTableView.delegate = self
         historyTableView.dataSource = self
-        // Si usas prototipo en storyboard, no registres celda aquí.
         cargarEventos()
     }
 
@@ -26,27 +20,55 @@ class EmergencyHistoryViewController: UIViewController {
            let evento = sender as? EmergencyEventSummary {
             destino.evento = evento
         }
-    }
 
-    // MARK: - Funciones privadas
     private var token: String? { UserDefaults.standard.string(forKey: "userToken") }
     private var userId: Int { UserDefaults.standard.integer(forKey: "userId") }
 
     private func cargarEventos() {
-        guard let tk = token, userId != 0 else { return }
+        guard let tk = token, userId != 0 else {
+            cargarHistorialOffline()
+            return
+        }
 
         // Aquí puedes mostrar un indicador de carga si quieres
         EmergencyEventService.shared.obtenerEventosPorUsuarioResumen(userId: userId, token: tk) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let lista):
-                    self?.eventos = lista
+                    self?.eventos = lista.sorted(by: { $0.id > $1.id })
                     self?.historyTableView.reloadData()
-                case .failure(let error):
-                    // Manejo del error
-                    print("Error al cargar eventos: \(error.localizedDescription)")
+                case .failure:
+                    self?.cargarHistorialOffline()
                 }
             }
+        }
+    }
+
+    private func cargarHistorialOffline() {
+        let fetchRequest: NSFetchRequest<HistorialEntity> = HistorialEntity.fetchRequest()
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "fecha", ascending: false)]
+        
+        do {
+            let locales = try CoreDataManager.shared.context.fetch(fetchRequest)
+            
+            let isoFormatter = ISO8601DateFormatter()
+            
+            self.eventos = locales.map { entity in
+                return EmergencyEventResponse(
+                    id: Int(entity.eventId),
+                    userId: self.userId,
+                    status: "OFFLINE",
+                    createdAt: isoFormatter.string(from: entity.fecha ?? Date()),
+                    resolvedAt: nil,
+                    type: entity.tipo ?? "Emergencia",
+                    description: "Registro guardado localmente",
+                    latitude: entity.latitude,
+                    longitude: entity.longitude
+                )
+            }
+            self.historyTableView.reloadData()
+        } catch {
+            print("Error CoreData: \(error)")
         }
     }
 
@@ -84,7 +106,6 @@ class EmergencyHistoryViewController: UIViewController {
     }
 }
 
-// MARK: - UITableViewDataSource & UITableViewDelegate
 extension EmergencyHistoryViewController: UITableViewDataSource, UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -92,8 +113,8 @@ extension EmergencyHistoryViewController: UITableViewDataSource, UITableViewDele
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "EventCell")
-            ?? UITableViewCell(style: .subtitle, reuseIdentifier: "EventCell")
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cellHistory")
+            ?? UITableViewCell(style: .subtitle, reuseIdentifier: "cellHistory")
 
         let evt = eventos[indexPath.row]
         let creadaTxt = formatearFecha(evt.activatedAt ?? "", formato: "dd/MM/yyyy HH:mm")

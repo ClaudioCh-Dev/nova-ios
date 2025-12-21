@@ -28,6 +28,26 @@ class EmergencyLocationService {
         realizarPeticion(request: request, tipo: EmergencyLocationResponse.self, completion: completion)
     }
 
+    func obtenerRutaDelEvento(eventId: Int, token: String, completion: @escaping (Result<[EmergencyLocationResponse], Error>) -> Void) {
+            let urlString = "\(Conexion.baseURL)/emergency-locations/\(eventId)"
+            
+            guard let url = URL(string: urlString) else { return }
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            
+            URLSession.shared.dataTask(with: request) { data, _, error in
+                if let error = error { completion(.failure(error)); return }
+                guard let data = data else { return }
+                
+                do {
+                    let ruta = try JSONDecoder().decode([EmergencyLocationResponse].self, from: data)
+                    completion(.success(ruta))
+                } catch {
+                    completion(.failure(error))
+                }
+            }.resume()
+        }
     // MARK: - GET LOCATION BY ID
     func obtenerUbicacionPorId(
         id: Int,
@@ -62,21 +82,22 @@ class EmergencyLocationService {
     }
 
     // MARK: - GET LOCATIONS BY EVENT
-    func obtenerUbicacionesPorEvento(
-        eventId: Int,
-        token: String,
-        completion: @escaping (Result<[EmergencyLocationResponse], Error>) -> Void
-    ) {
-        let urlString = "\(Conexion.baseURL)/api/emergency-locations/event/\(eventId)"
-        guard let url = URL(string: urlString) else { return }
+        func obtenerUbicacionesPorEvento(
+            eventId: Int,
+            token: String,
+            completion: @escaping (Result<[EmergencyLocationResponse], Error>) -> Void
+        ) {
+            let urlString = "\(Conexion.baseURL)/api/emergency-locations/event/\(eventId)"
+            
+            guard let url = URL(string: urlString) else { return }
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        realizarPeticion(request: request, tipo: [EmergencyLocationResponse].self, completion: completion)
-    }
+            realizarPeticion(request: request, tipo: [EmergencyLocationResponse].self, completion: completion)
+        }
 
     // MARK: - DELETE LOCATION
     func eliminarUbicacion(

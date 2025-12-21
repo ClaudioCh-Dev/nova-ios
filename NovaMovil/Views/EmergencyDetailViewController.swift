@@ -1,27 +1,16 @@
-//
-//  EmergencyDetailViewController.swift
-//  NovaMovil
-//
-//  Created by user288878 on 12/15/25.
-//
-
 import UIKit
 import MapKit
 
-class EmergencyDetailViewController: UIViewController {
+class EmergencyDetailViewController: UIViewController, MKMapViewDelegate {
     
     var evento: EmergencyEventSummary?
     
-    
+    // MARK: - Outlets
     @IBOutlet weak var dayLabel: UILabel!
-    
-    
     @IBOutlet weak var scheduleLabel: UILabel!
-    
     @IBOutlet weak var mapMapView: MKMapView!
     
-    
-    	
+    // MARK: - Ciclo de Vida
     override func viewDidLoad() {
         super.viewDidLoad()
         // Mostrar recorridos (polilíneas) y pines en el mapa
@@ -54,7 +43,8 @@ private extension EmergencyDetailViewController {
         // Carga opcional de ubicación más reciente para el evento
         cargarUltimaUbicacion(eventId: evt.id)
     }
-
+    
+    // MARK: - Helpers
     func formatearFecha(_ iso: String, formato: String) -> String {
         guard !iso.isEmpty else { return "" }
 

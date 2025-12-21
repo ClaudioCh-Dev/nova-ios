@@ -8,7 +8,14 @@ class LoginViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(ocultarTeclado))
+        tapGestureRecognizer.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGestureRecognizer)
     }
+    @objc func ocultarTeclado() {
+        view.endEditing(true)
+    }
+    
 
     @IBAction func IngresarAction(_ sender: Any) {
         guard let email = CorreoView.text, !email.isEmpty else {
