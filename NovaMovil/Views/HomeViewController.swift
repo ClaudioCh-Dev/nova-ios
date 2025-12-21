@@ -202,10 +202,9 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
               let token = UserDefaults.standard.string(forKey: "userToken") else { return }
         
         let request = CreateEmergencyLocationRequest(
-            eventId: eventId,
+            emergencyEventId: eventId,
             latitude: location.coordinate.latitude,
-            longitude: location.coordinate.longitude,
-            timestamp: ISO8601DateFormatter().string(from: Date())
+            longitude: location.coordinate.longitude
         )
         
         EmergencyLocationService.shared.crearUbicacionEmergencia(datos: request, token: token) { result in
