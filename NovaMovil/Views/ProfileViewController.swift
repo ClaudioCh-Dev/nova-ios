@@ -45,13 +45,20 @@ class ProfileViewController: UIViewController {
     @IBAction func closeSessionButtonTapped(_ sender: Any) {
         let alerta = UIAlertController(title: "Cerrar sesión", message: "¿Desea salir de su cuenta?", preferredStyle: .alert)
         alerta.addAction(UIAlertAction(title: "Cancelar", style: .cancel))
-        alerta.addAction(UIAlertAction(title: "Salir", style: .destructive, handler: { [weak self] _ in
+        alerta.addAction(UIAlertAction(title: "Salir", style: .destructive, handler: { _ in
+            // Limpiar datos de usuario
             UserDefaults.standard.removeObject(forKey: "userToken")
             UserDefaults.standard.removeObject(forKey: "userId")
-            if let nav = self?.navigationController {
-                nav.popToRootViewController(animated: true)
-            } else {
-                self?.dismiss(animated: true)
+            
+            // Instanciar HomeViewController y ponerlo como root
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            guard let homeVC = storyboard.instantiateViewController(withIdentifier: "login") as? LoginViewController else { return }
+            let nav = UINavigationController(rootViewController: homeVC)
+            
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let sceneDelegate = windowScene.delegate as? SceneDelegate {
+                sceneDelegate.window?.rootViewController = nav
+                sceneDelegate.window?.makeKeyAndVisible()
             }
         }))
         present(alerta, animated: true)
