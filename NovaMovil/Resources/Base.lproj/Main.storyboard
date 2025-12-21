@@ -577,7 +577,7 @@
                                 <rect key="frame" x="0.0" y="211" width="393" height="50"/>
                                 <color key="backgroundColor" red="0.023529411760000001" green="0.30588235289999999" blue="0.23137254900000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="50" id="ohN-On-chK"/>
+                                    <constraint firstAttribute="height" constant="50" id="ohN-On-chK"/>
                                     <constraint firstAttribute="height" constant="50" id="qrK-cW-088"/>
                                 </constraints>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -585,70 +585,33 @@
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="LQZ-Nf-0qa">
-                                <rect key="frame" x="10" y="291" width="373" height="200"/>
+                                <rect key="frame" x="0.0" y="291" width="393" height="492"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" constant="200" id="xlj-aE-8lf"/>
+                                    <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="200" id="xlj-aE-8lf"/>
                                 </constraints>
                                 <standardMapConfiguration key="preferredConfiguration"/>
                             </mapView>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="fff-Im-Zs9">
-                                <rect key="frame" x="20" y="601" width="353" height="50"/>
-                                <color key="backgroundColor" systemColor="systemGray5Color"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="50" id="ODF-0R-2iH"/>
-                                </constraints>
-                                <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="filled" title="Exportar como PDF">
-                                    <fontDescription key="titleFontDescription" style="UICTFontTextStyleTitle2"/>
-                                    <color key="baseBackgroundColor" red="0.062745098040000002" green="0.72549019609999998" blue="0.50588235290000005" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                </buttonConfiguration>
-                                <userDefinedRuntimeAttributes>
-                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
-                                        <integer key="value" value="16"/>
-                                    </userDefinedRuntimeAttribute>
-                                </userDefinedRuntimeAttributes>
-                                <connections>
-                                    <action selector="pdfButtonTapped:" destination="osE-5V-Gn9" eventType="touchUpInside" id="ZAo-SN-Bvl"/>
-                                </connections>
-                            </button>
-                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="EXPORTAR INFORMACIÓN" borderStyle="roundedRect" textAlignment="center" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="TOR-fh-8o7">
-                                <rect key="frame" x="0.0" y="521" width="393" height="50"/>
-                                <color key="backgroundColor" red="0.023529411760000001" green="0.30588235289999999" blue="0.23137254900000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="50" id="HeV-uw-Tgp"/>
-                                    <constraint firstAttribute="height" constant="50" id="d3k-EU-GAd"/>
-                                </constraints>
-                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="13"/>
-                                <textInputTraits key="textInputTraits"/>
-                            </textField>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="C1o-Sw-QTP"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstItem="TOR-fh-8o7" firstAttribute="trailing" secondItem="C1o-Sw-QTP" secondAttribute="trailing" id="81G-kd-qwO"/>
                             <constraint firstItem="LQZ-Nf-0qa" firstAttribute="top" secondItem="mC8-AD-WhF" secondAttribute="bottom" constant="30" id="8kT-5E-MTp"/>
                             <constraint firstItem="y98-HL-fES" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" constant="20" id="AEH-kp-S3X"/>
-                            <constraint firstItem="LQZ-Nf-0qa" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" constant="10" id="Chx-uf-FIG"/>
-                            <constraint firstItem="fff-Im-Zs9" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" constant="20" id="Com-om-Fjm"/>
+                            <constraint firstItem="LQZ-Nf-0qa" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" id="Chx-uf-FIG"/>
                             <constraint firstItem="C1o-Sw-QTP" firstAttribute="trailing" secondItem="mC8-AD-WhF" secondAttribute="trailing" id="Ipf-WE-Zf0"/>
                             <constraint firstItem="mC8-AD-WhF" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" id="Jv7-XP-g3f"/>
                             <constraint firstItem="Zig-Vh-lHV" firstAttribute="top" secondItem="C1o-Sw-QTP" secondAttribute="top" constant="10" id="KHY-d4-avi"/>
-                            <constraint firstItem="C1o-Sw-QTP" firstAttribute="trailing" secondItem="fff-Im-Zs9" secondAttribute="trailing" constant="20" id="MDD-yf-FeF"/>
-                            <constraint firstItem="TOR-fh-8o7" firstAttribute="top" secondItem="LQZ-Nf-0qa" secondAttribute="bottom" constant="30" id="MdC-4p-eSq"/>
                             <constraint firstItem="y98-HL-fES" firstAttribute="top" secondItem="Zig-Vh-lHV" secondAttribute="bottom" constant="20" id="OiI-QN-Uz4"/>
                             <constraint firstItem="mC8-AD-WhF" firstAttribute="top" secondItem="3o7-ff-ZxL" secondAttribute="bottom" constant="20" id="Tfc-zb-8gC"/>
-                            <constraint firstItem="C1o-Sw-QTP" firstAttribute="trailing" secondItem="LQZ-Nf-0qa" secondAttribute="trailing" constant="10" id="YwA-6p-hEL"/>
+                            <constraint firstItem="C1o-Sw-QTP" firstAttribute="trailing" secondItem="LQZ-Nf-0qa" secondAttribute="trailing" id="YwA-6p-hEL"/>
                             <constraint firstItem="C1o-Sw-QTP" firstAttribute="trailing" secondItem="3o7-ff-ZxL" secondAttribute="trailing" constant="20" id="aXz-hC-FDF"/>
                             <constraint firstItem="Zig-Vh-lHV" firstAttribute="trailing" secondItem="C1o-Sw-QTP" secondAttribute="trailing" id="boM-SW-jgm"/>
-                            <constraint firstItem="TOR-fh-8o7" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" id="dfI-yL-JVQ"/>
                             <constraint firstItem="3o7-ff-ZxL" firstAttribute="top" secondItem="y98-HL-fES" secondAttribute="bottom" constant="10" id="doe-5k-gj1"/>
-                            <constraint firstItem="fff-Im-Zs9" firstAttribute="top" secondItem="TOR-fh-8o7" secondAttribute="bottom" constant="30" id="e36-qd-qG0"/>
                             <constraint firstItem="C1o-Sw-QTP" firstAttribute="trailing" secondItem="y98-HL-fES" secondAttribute="trailing" constant="20" id="k7Z-Hg-Whu"/>
                             <constraint firstItem="mC8-AD-WhF" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" id="ka4-ZW-BKg"/>
                             <constraint firstItem="3o7-ff-ZxL" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" constant="20" id="mEH-Ko-PV6"/>
                             <constraint firstItem="Zig-Vh-lHV" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" id="mGx-Vv-7lZ"/>
+                            <constraint firstItem="C1o-Sw-QTP" firstAttribute="bottom" secondItem="LQZ-Nf-0qa" secondAttribute="bottom" id="pwa-e4-uoa"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="zGC-C4-3He"/>

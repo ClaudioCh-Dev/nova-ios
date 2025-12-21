@@ -29,21 +29,6 @@ class EmergencyDetailViewController: UIViewController {
         configurarVista()
     }
     
-
-    @IBAction func pdfButtonTapped(_ sender: Any) {
-        let renderer = UIGraphicsPDFRenderer(bounds: view.bounds)
-        let data = renderer.pdfData { ctx in
-            ctx.beginPage()
-            view.layer.render(in: ctx.cgContext)
-        }
-
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("DetalleEmergencia.pdf")
-        do {
-            try data.write(to: tempURL)
-            let av = UIActivityViewController(activityItems: [tempURL], applicationActivities: nil)
-            present(av, animated: true)
-        } catch { }
-    }
     /*
     // MARK: - Navigation
 
