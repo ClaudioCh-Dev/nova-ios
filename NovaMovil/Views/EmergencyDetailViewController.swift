@@ -24,6 +24,8 @@ class EmergencyDetailViewController: UIViewController {
     	
     override func viewDidLoad() {
         super.viewDidLoad()
+        // Mostrar recorridos (polilíneas) y pines en el mapa
+        mapMapView.delegate = self
         configurarVista()
     }
     
@@ -111,14 +113,22 @@ private extension EmergencyDetailViewController {
                     }
 
                     var lastCoord: CLLocationCoordinate2D?
+                    var coords: [CLLocationCoordinate2D] = []
                     for loc in datos {
                         let coord = CLLocationCoordinate2D(latitude: loc.latitude, longitude: loc.longitude)
                         lastCoord = coord
+                        coords.append(coord)
                         let pin = MKPointAnnotation()
                         pin.coordinate = coord
                         pin.title = "Ubicación capturada"
                         pin.subtitle = self?.formatearFecha(loc.capturedAt, formato: "dd/MM/yyyy HH:mm")
                         self?.mapMapView.addAnnotation(pin)
+                    }
+
+                    // Dibujar recorrido como polilínea si hay al menos 2 puntos
+                    if coords.count >= 2 {
+                        let ruta = MKPolyline(coordinates: coords, count: coords.count)
+                        self?.mapMapView.addOverlay(ruta)
                     }
 
                     if let coord = lastCoord {
@@ -130,5 +140,20 @@ private extension EmergencyDetailViewController {
                 }
             }
         }
+    }
+}
+
+// MARK: - MKMapViewDelegate (Render del recorrido)
+extension EmergencyDetailViewController: MKMapViewDelegate {
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        if let polyline = overlay as? MKPolyline {
+            let renderer = MKPolylineRenderer(polyline: polyline)
+            renderer.strokeColor = .systemBlue
+            renderer.lineWidth = 3
+            renderer.lineJoin = .round
+            renderer.lineCap = .round
+            return renderer
+        }
+        return MKOverlayRenderer(overlay: overlay)
     }
 }
