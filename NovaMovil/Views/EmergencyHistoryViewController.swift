@@ -8,7 +8,7 @@ import UIKit
 class EmergencyHistoryViewController: UIViewController {
 
     @IBOutlet weak var historyTableView: UITableView!
-    private var eventos: [EmergencyEventResponse] = []
+    private var eventos: [EmergencyEventSummary] = []
 
     // MARK: - Ciclo de vida
     override func viewDidLoad() {
@@ -21,9 +21,9 @@ class EmergencyHistoryViewController: UIViewController {
 
     // MARK: - Navegación
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "detalleEmergenciaSegue",
+        if segue.identifier == "detailEmergencySegue",
            let destino = segue.destination as? EmergencyDetailViewController,
-           let evento = sender as? EmergencyEventResponse {
+           let evento = sender as? EmergencyEventSummary {
             destino.evento = evento
         }
     }
@@ -36,7 +36,7 @@ class EmergencyHistoryViewController: UIViewController {
         guard let tk = token, userId != 0 else { return }
 
         // Aquí puedes mostrar un indicador de carga si quieres
-        EmergencyEventService.shared.obtenerEventosPorUsuario(userId: userId, token: tk) { [weak self] result in
+        EmergencyEventService.shared.obtenerEventosPorUsuarioResumen(userId: userId, token: tk) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let lista):
@@ -51,16 +51,31 @@ class EmergencyHistoryViewController: UIViewController {
     }
 
     private func formatearFecha(_ iso: String, formato: String) -> String {
+        // Intento 1: ISO8601 con fracción
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         var fecha = isoFormatter.date(from: iso)
+        // Intento 2: "yyyy-MM-dd'T'HH:mm:ss" (LocalDateTime sin zona)
         if fecha == nil {
-            let alt = DateFormatter()
-            alt.locale = Locale(identifier: "en_US_POSIX")
-            alt.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-            fecha = alt.date(from: iso)
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+            fecha = df.date(from: iso)
         }
-
+        // Intento 3: "yyyy-MM-dd'T'HH:mm:ss.SSS" (con milisegundos)
+        if fecha == nil {
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+            fecha = df.date(from: iso)
+        }
+        // Intento 4: con zona "Z"
+        if fecha == nil {
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+            fecha = df.date(from: iso)
+        }
         guard let date = fecha else { return iso }
         let df = DateFormatter()
         df.locale = Locale(identifier: "es_PE")
@@ -81,8 +96,10 @@ extension EmergencyHistoryViewController: UITableViewDataSource, UITableViewDele
             ?? UITableViewCell(style: .subtitle, reuseIdentifier: "EventCell")
 
         let evt = eventos[indexPath.row]
-        cell.textLabel?.text = "\(evt.type) • \(formatearFecha(evt.createdAt, formato: "dd/MM/yyyy HH:mm"))"
-        cell.detailTextLabel?.text = evt.status
+        let creadaTxt = formatearFecha(evt.activatedAt ?? "", formato: "dd/MM/yyyy HH:mm")
+        let cerradaTxt = formatearFecha(evt.closedAt ?? "", formato: "dd/MM/yyyy HH:mm")
+        cell.textLabel?.text = (creadaTxt.isEmpty ? "—" : creadaTxt)
+        cell.detailTextLabel?.text = (evt.status ?? "—") + " • " + (cerradaTxt.isEmpty ? "—" : cerradaTxt)
         cell.accessoryType = .disclosureIndicator
         return cell
     }
@@ -90,6 +107,6 @@ extension EmergencyHistoryViewController: UITableViewDataSource, UITableViewDele
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let evt = eventos[indexPath.row]
-        performSegue(withIdentifier: "detalleEmergenciaSegue", sender: evt)
+        performSegue(withIdentifier: "detailEmergencySegue", sender: evt)
     }
 }

@@ -78,6 +78,23 @@ class EmergencyEventService {
         realizarPeticion(request: request, tipo: [EmergencyEventResponse].self, completion: completion)
     }
 
+    // MARK: - GET EVENTS BY USER (Resumen)
+    func obtenerEventosPorUsuarioResumen(
+        userId: Int,
+        token: String,
+        completion: @escaping (Result<[EmergencyEventSummary], Error>) -> Void
+    ) {
+        let urlString = "\(Conexion.baseURL)/api/emergency-events/user/\(userId)"
+        guard let url = URL(string: urlString) else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        realizarPeticion(request: request, tipo: [EmergencyEventSummary].self, completion: completion)
+    }
+
     // MARK: - GET ACTIVE EVENTS
     func obtenerEventosActivos(
         token: String,
@@ -156,11 +173,34 @@ class EmergencyEventService {
                 guard let data = data else { return }
 
                 do {
-                    let decoded = try JSONDecoder().decode(T.self, from: data)
+                    let decoder = JSONDecoder()
+                    // No estrategia de fechas: usamos String en modelos
+                    let decoded = try decoder.decode(T.self, from: data)
                     completion(.success(decoded))
                 } catch {
+                    let raw = String(data: data, encoding: .utf8) ?? "<binario>"
+                    let detalle = self.descripcionDecodingError(error)
+                    print("[EmergencyEventService] Error decodificando: \(detalle)\nJSON: \n\(raw)")
                     completion(.failure(error))
                 }
             }.resume()
+        }
+
+        private func descripcionDecodingError(_ error: Error) -> String {
+            if let e = error as? DecodingError {
+                switch e {
+                case .keyNotFound(let key, let ctx):
+                    return "keyNotFound(\(key.stringValue)) en \(ctx.codingPath.map{ $0.stringValue }.joined(separator: "."))"
+                case .valueNotFound(let type, let ctx):
+                    return "valueNotFound(\(type)) en \(ctx.codingPath.map{ $0.stringValue }.joined(separator: "."))"
+                case .typeMismatch(let type, let ctx):
+                    return "typeMismatch(\(type)) en \(ctx.codingPath.map{ $0.stringValue }.joined(separator: "."))"
+                case .dataCorrupted(let ctx):
+                    return "dataCorrupted: \(ctx.debugDescription)"
+                @unknown default:
+                    return "DecodingError desconocido"
+                }
+            }
+            return error.localizedDescription
         }
     }
