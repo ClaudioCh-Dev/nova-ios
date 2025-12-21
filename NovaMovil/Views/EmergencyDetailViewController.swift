@@ -58,13 +58,13 @@ private extension EmergencyDetailViewController {
     func configurarVista() {
         guard let evt = evento else { return }
 
-        let fechaTexto = formatearFecha(evt.createdAt, formato: "EEEE, d 'de' MMMM")
+        let fechaTexto = formatearFecha(evt.createdAt ?? "1", formato: "EEEE, d 'de' MMMM")
         dayLabel.text = fechaTexto
 
-        let horaTexto = formatearFecha(evt.createdAt, formato: "HH:mm")
+        let horaTexto = formatearFecha(evt.createdAt ?? "1", formato: "HH:mm")
         scheduleLabel.text = horaTexto
 
-        let coord = CLLocationCoordinate2D(latitude: evt.latitude, longitude: evt.longitude)
+        let coord = CLLocationCoordinate2D(latitude: evt.latitude ?? 1, longitude: evt.longitude ?? 1)
         let region = MKCoordinateRegion(center: coord, latitudinalMeters: 500, longitudinalMeters: 500)
         mapMapView.setRegion(region, animated: false)
 
