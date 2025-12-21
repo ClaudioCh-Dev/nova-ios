@@ -8,7 +8,7 @@ import UIKit
 class EmergencyHistoryViewController: UIViewController {
 
     @IBOutlet weak var historyTableView: UITableView!
-    private var eventos: [EmergencyEventResponse] = []
+    private var eventos: [EmergencyEventSummary] = []
 
     // MARK: - Ciclo de vida
     override func viewDidLoad() {
@@ -23,7 +23,7 @@ class EmergencyHistoryViewController: UIViewController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "detalleEmergenciaSegue",
            let destino = segue.destination as? EmergencyDetailViewController,
-           let evento = sender as? EmergencyEventResponse {
+           let evento = sender as? EmergencyEventSummary {
             destino.evento = evento
         }
     }
@@ -36,7 +36,7 @@ class EmergencyHistoryViewController: UIViewController {
         guard let tk = token, userId != 0 else { return }
 
         // Aquí puedes mostrar un indicador de carga si quieres
-        EmergencyEventService.shared.obtenerEventosPorUsuario(userId: userId, token: tk) { [weak self] result in
+        EmergencyEventService.shared.obtenerEventosPorUsuarioResumen(userId: userId, token: tk) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let lista):
@@ -96,10 +96,10 @@ extension EmergencyHistoryViewController: UITableViewDataSource, UITableViewDele
             ?? UITableViewCell(style: .subtitle, reuseIdentifier: "EventCell")
 
         let evt = eventos[indexPath.row]
-        let fechaTexto = formatearFecha(evt.createdAt ?? "", formato: "dd/MM/yyyy HH:mm")
-        let titulo = (evt.type ?? "Evento") + " • " + (fechaTexto.isEmpty ? "—" : fechaTexto)
-        cell.textLabel?.text = titulo
-        cell.detailTextLabel?.text = evt.status ?? ""
+        let creadaTxt = formatearFecha(evt.activatedAt ?? "", formato: "dd/MM/yyyy HH:mm")
+        let cerradaTxt = formatearFecha(evt.closedAt ?? "", formato: "dd/MM/yyyy HH:mm")
+        cell.textLabel?.text = (creadaTxt.isEmpty ? "—" : creadaTxt)
+        cell.detailTextLabel?.text = (evt.status ?? "—") + " • " + (cerradaTxt.isEmpty ? "—" : cerradaTxt)
         cell.accessoryType = .disclosureIndicator
         return cell
     }

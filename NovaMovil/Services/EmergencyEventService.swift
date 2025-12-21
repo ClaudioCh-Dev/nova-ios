@@ -78,6 +78,23 @@ class EmergencyEventService {
         realizarPeticion(request: request, tipo: [EmergencyEventResponse].self, completion: completion)
     }
 
+    // MARK: - GET EVENTS BY USER (Resumen)
+    func obtenerEventosPorUsuarioResumen(
+        userId: Int,
+        token: String,
+        completion: @escaping (Result<[EmergencyEventSummary], Error>) -> Void
+    ) {
+        let urlString = "\(Conexion.baseURL)/api/emergency-events/user/\(userId)"
+        guard let url = URL(string: urlString) else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        realizarPeticion(request: request, tipo: [EmergencyEventSummary].self, completion: completion)
+    }
+
     // MARK: - GET ACTIVE EVENTS
     func obtenerEventosActivos(
         token: String,
