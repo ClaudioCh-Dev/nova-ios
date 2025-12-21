@@ -26,6 +26,11 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     var currentEventId: Int?
     var locationUpdateTimer: Timer?
     var contactosGuardados: [ContactoEntity] = []
+    private var lastSentAt: Date?
+    private let minSendInterval: TimeInterval = 10
+    private var lastSentCoord: CLLocationCoordinate2D?
+    private let minDistanceMeters: CLLocationDistance = 10
+    private var bgTaskId: UIBackgroundTaskIdentifier = .invalid
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -166,6 +171,12 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
             print("❌ Datos faltantes para API")
             return
         }
+
+        // Escalar permisos si es necesario para background
+        let status = locationManager.authorizationStatus
+        if status == .authorizedWhenInUse {
+            locationManager.requestAlwaysAuthorization()
+        }
         
         let request = CreateEmergencyEventRequest(
             userId: userId,
@@ -182,6 +193,12 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
                 print("✅ Evento creado ID: \(response.id)")
                 
                 self?.guardarHistorialLocal(id: Int64(response.id), tipo: "Pánico")
+                // Preparar manager para background
+                DispatchQueue.main.async {
+                    self?.locationManager.allowsBackgroundLocationUpdates = true
+                    if #available(iOS 11.0, *) { self?.locationManager.showsBackgroundLocationIndicator = true }
+                    self?.locationManager.desiredAccuracy = kCLLocationAccuracyBest
+                }
                 self?.iniciarRastreoUbicacion()
                 
             case .failure(let error):
@@ -191,27 +208,77 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     }
     
     func iniciarRastreoUbicacion() {
+        // Evitar timers duplicados
+        locationUpdateTimer?.invalidate()
+        locationUpdateTimer = nil
+
+        // Respetar la configuración de ubicación y permisos del sistema
+        guard ConfiguracionViewController.isLocationEnabled() else {
+            print("⚠️ Rastreo no iniciado: ubicación desactivada en ajustes de la app")
+            return
+        }
+        let status = locationManager.authorizationStatus
+        guard status == .authorizedAlways || status == .authorizedWhenInUse else {
+            print("⚠️ Rastreo no iniciado: permisos de ubicación no concedidos")
+            return
+        }
+
         locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
             self?.enviarUbicacionActual()
         }
     }
     
     func enviarUbicacionActual() {
+        guard isServiceActive else { return }
         guard let eventId = currentEventId,
               let location = locationManager.location,
               let token = UserDefaults.standard.string(forKey: "userToken") else { return }
-        
+        enviarUbicacionActual(location)
+    }
+
+    private func enviarUbicacionActual(_ location: CLLocation) {
+        guard let eventId = currentEventId,
+              let token = UserDefaults.standard.string(forKey: "userToken") else { return }
+
+        // Throttling por tiempo y distancia
+        let now = Date()
+        if let last = lastSentAt, now.timeIntervalSince(last) < minSendInterval {
+            return
+        }
+        if let lastCoord = lastSentCoord {
+            let lastLocation = CLLocation(latitude: lastCoord.latitude, longitude: lastCoord.longitude)
+            let distance = lastLocation.distance(from: location)
+            if distance < minDistanceMeters { return }
+        }
+
         let request = CreateEmergencyLocationRequest(
             emergencyEventId: eventId,
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude
         )
-        
-        EmergencyLocationService.shared.crearUbicacionEmergencia(datos: request, token: token) { result in
-            if case .failure(let error) = result {
-                print("⚠️ Error enviando trace: \(error)")
-            } else {
+
+        // Asegurar tiempo de ejecución en background para completar el POST
+        if bgTaskId == .invalid {
+            bgTaskId = UIApplication.shared.beginBackgroundTask(withName: "SendEmergencyLocation") { [weak self] in
+                if let id = self?.bgTaskId { UIApplication.shared.endBackgroundTask(id) }
+                self?.bgTaskId = .invalid
+            }
+        }
+
+        EmergencyLocationService.shared.crearUbicacionEmergencia(datos: request, token: token) { [weak self] result in
+            defer {
+                if let id = self?.bgTaskId, id != .invalid {
+                    UIApplication.shared.endBackgroundTask(id)
+                    self?.bgTaskId = .invalid
+                }
+            }
+            switch result {
+            case .success:
+                self?.lastSentAt = now
+                self?.lastSentCoord = location.coordinate
                 print("📍 Trace enviado")
+            case .failure(let error):
+                print("⚠️ Error enviando trace: \(error)")
             }
         }
     }
@@ -353,11 +420,10 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
 extension HomeViewController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
-        _ = MKCoordinateRegion(
-            center: location.coordinate,
-            latitudinalMeters: 500,
-            longitudinalMeters: 500
-        )
+        // Enviar por callback de CoreLocation (funciona en background)
+        if isServiceActive && ConfiguracionViewController.isLocationEnabled() {
+            enviarUbicacionActual(location)
+        }
     }
 }
 

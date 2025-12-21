@@ -69,5 +69,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         (UIApplication.shared.delegate as? AppDelegate)?.saveContext()
     }
 
+    // Manejo de URL scheme para activar/desactivar desde Widget o accesos directos
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        guard let url = URLContexts.first?.url else { return }
+        guard url.scheme?.lowercased() == "nova" else { return }
+
+        let host = url.host?.lowercased()
+        if host == "activate" {
+            NotificationCenter.default.post(name: NSNotification.Name("TriggerNovaEmergency"), object: nil)
+        } else if host == "deactivate" {
+            NotificationCenter.default.post(name: NSNotification.Name("TriggerNovaEmergency"), object: nil)
+        }
+    }
+
 
 }
