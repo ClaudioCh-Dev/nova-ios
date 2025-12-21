@@ -21,7 +21,7 @@ class EmergencyHistoryViewController: UIViewController {
 
     // MARK: - Navegación
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "detalleEmergenciaSegue",
+        if segue.identifier == "detailEmergencySegue",
            let destino = segue.destination as? EmergencyDetailViewController,
            let evento = sender as? EmergencyEventSummary {
             destino.evento = evento
@@ -107,6 +107,6 @@ extension EmergencyHistoryViewController: UITableViewDataSource, UITableViewDele
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let evt = eventos[indexPath.row]
-        performSegue(withIdentifier: "detalleEmergenciaSegue", sender: evt)
+        performSegue(withIdentifier: "detailEmergencySegue", sender: evt)
     }
 }
