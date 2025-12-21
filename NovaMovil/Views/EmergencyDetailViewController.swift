@@ -60,32 +60,61 @@ private extension EmergencyDetailViewController {
     func configurarVista() {
         guard let evt = evento else { return }
 
-        let fechaTexto = formatearFecha(evt.activatedAt ?? "", formato: "EEEE, d 'de' MMMM")
-        dayLabel.text = fechaTexto
+        let fechaTexto = formatearFecha(evt.activatedAt ?? "", formato: "dd/MM/yyyy")
+        dayLabel.text = "Fecha: " + (fechaTexto.isEmpty ? "—" : fechaTexto)
 
         let horaTexto = formatearFecha(evt.activatedAt ?? "", formato: "HH:mm")
-        scheduleLabel.text = horaTexto
+        scheduleLabel.text = "Hora: " + (horaTexto.isEmpty ? "—" : horaTexto)
 
         // Carga opcional de ubicación más reciente para el evento
         cargarUltimaUbicacion(eventId: evt.id)
     }
 
     func formatearFecha(_ iso: String, formato: String) -> String {
+        guard !iso.isEmpty else { return "" }
+
+        // Intento 1: ISO8601 con fracción
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         var fecha = isoFormatter.date(from: iso)
+
+        // Intento 2: LocalDateTime sin zona
         if fecha == nil {
-            let alt = DateFormatter()
-            alt.locale = Locale(identifier: "en_US_POSIX")
-            alt.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-            fecha = alt.date(from: iso)
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+            fecha = df.date(from: iso)
+        }
+
+        // Intento 3: LocalDateTime con milisegundos sin zona
+        if fecha == nil {
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+            fecha = df.date(from: iso)
+        }
+
+        // Intento 4: Con zona Z 
+        if fecha == nil {
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+            fecha = df.date(from: iso)
+        }
+
+        // Intento 5: Con milisegundos y zona Z
+        if fecha == nil {
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+            fecha = df.date(from: iso)
         }
 
         guard let date = fecha else { return iso }
         let df = DateFormatter()
         df.locale = Locale(identifier: "es_PE")
         df.dateFormat = formato
-        return df.string(from: date).capitalized
+        return df.string(from: date)
     }
 }
 
