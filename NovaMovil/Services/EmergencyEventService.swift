@@ -161,11 +161,9 @@ class EmergencyEventService {
                     let decoded = try decoder.decode(T.self, from: data)
                     completion(.success(decoded))
                 } catch {
-                    #if DEBUG
                     let raw = String(data: data, encoding: .utf8) ?? "<binario>"
                     let detalle = self.descripcionDecodingError(error)
                     print("[EmergencyEventService] Error decodificando: \(detalle)\nJSON: \n\(raw)")
-                    #endif
                     completion(.failure(error))
                 }
             }.resume()

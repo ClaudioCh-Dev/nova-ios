@@ -96,9 +96,10 @@ extension EmergencyHistoryViewController: UITableViewDataSource, UITableViewDele
             ?? UITableViewCell(style: .subtitle, reuseIdentifier: "EventCell")
 
         let evt = eventos[indexPath.row]
-        let titulo = (evt.type ?? "Evento") + " • " + formatearFecha(evt.createdAt, formato: "dd/MM/yyyy HH:mm")
+        let fechaTexto = formatearFecha(evt.createdAt ?? "", formato: "dd/MM/yyyy HH:mm")
+        let titulo = (evt.type ?? "Evento") + " • " + (fechaTexto.isEmpty ? "—" : fechaTexto)
         cell.textLabel?.text = titulo
-        cell.detailTextLabel?.text = evt.status
+        cell.detailTextLabel?.text = evt.status ?? ""
         cell.accessoryType = .disclosureIndicator
         return cell
     }
