@@ -1,14 +1,15 @@
 import Foundation
 
 struct CreateEmergencyLocationRequest: Codable {
-    let eventId: Int
+    let emergencyEventId: Int
     let latitude: Double
     let longitude: Double
-    let timestamp: String
 }
 
 struct EmergencyLocationResponse: Codable {
+    let id: Int
+    let emergencyEventId: Int
     let latitude: Double
     let longitude: Double
-    let timestamp: String?
+    let capturedAt: String
 }

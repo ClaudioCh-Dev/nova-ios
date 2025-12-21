@@ -579,18 +579,43 @@
                                 <rect key="frame" x="0.0" y="211" width="393" height="50"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" red="0.023529411760000001" green="0.30588235289999999" blue="0.23137254900000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="50" id="ohN-On-chK"/>
+                                    <constraint firstAttribute="height" constant="50" id="qrK-cW-088"/>
+                                </constraints>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="13"/>
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
-                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LQZ-Nf-0qa">
-                                <rect key="frame" x="10" y="291" width="373" height="200"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="LQZ-Nf-0qa">
+                                <rect key="frame" x="0.0" y="291" width="393" height="492"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="200" id="xlj-aE-8lf"/>
+                                </constraints>
                                 <standardMapConfiguration key="preferredConfiguration"/>
                             </mapView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="C1o-Sw-QTP"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="LQZ-Nf-0qa" firstAttribute="top" secondItem="mC8-AD-WhF" secondAttribute="bottom" constant="30" id="8kT-5E-MTp"/>
+                            <constraint firstItem="y98-HL-fES" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" constant="20" id="AEH-kp-S3X"/>
+                            <constraint firstItem="LQZ-Nf-0qa" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" id="Chx-uf-FIG"/>
+                            <constraint firstItem="C1o-Sw-QTP" firstAttribute="trailing" secondItem="mC8-AD-WhF" secondAttribute="trailing" id="Ipf-WE-Zf0"/>
+                            <constraint firstItem="mC8-AD-WhF" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" id="Jv7-XP-g3f"/>
+                            <constraint firstItem="Zig-Vh-lHV" firstAttribute="top" secondItem="C1o-Sw-QTP" secondAttribute="top" constant="10" id="KHY-d4-avi"/>
+                            <constraint firstItem="y98-HL-fES" firstAttribute="top" secondItem="Zig-Vh-lHV" secondAttribute="bottom" constant="20" id="OiI-QN-Uz4"/>
+                            <constraint firstItem="mC8-AD-WhF" firstAttribute="top" secondItem="3o7-ff-ZxL" secondAttribute="bottom" constant="20" id="Tfc-zb-8gC"/>
+                            <constraint firstItem="C1o-Sw-QTP" firstAttribute="trailing" secondItem="LQZ-Nf-0qa" secondAttribute="trailing" id="YwA-6p-hEL"/>
+                            <constraint firstItem="C1o-Sw-QTP" firstAttribute="trailing" secondItem="3o7-ff-ZxL" secondAttribute="trailing" constant="20" id="aXz-hC-FDF"/>
+                            <constraint firstItem="Zig-Vh-lHV" firstAttribute="trailing" secondItem="C1o-Sw-QTP" secondAttribute="trailing" id="boM-SW-jgm"/>
+                            <constraint firstItem="3o7-ff-ZxL" firstAttribute="top" secondItem="y98-HL-fES" secondAttribute="bottom" constant="10" id="doe-5k-gj1"/>
+                            <constraint firstItem="C1o-Sw-QTP" firstAttribute="trailing" secondItem="y98-HL-fES" secondAttribute="trailing" constant="20" id="k7Z-Hg-Whu"/>
+                            <constraint firstItem="mC8-AD-WhF" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" id="ka4-ZW-BKg"/>
+                            <constraint firstItem="3o7-ff-ZxL" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" constant="20" id="mEH-Ko-PV6"/>
+                            <constraint firstItem="Zig-Vh-lHV" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" id="mGx-Vv-7lZ"/>
+                            <constraint firstItem="C1o-Sw-QTP" firstAttribute="bottom" secondItem="LQZ-Nf-0qa" secondAttribute="bottom" id="pwa-e4-uoa"/>
+                        </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="zGC-C4-3He"/>
                     <connections>
@@ -1559,7 +1584,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                         <connections>
-                                            <segue destination="osE-5V-Gn9" kind="show" identifier="detalleEmergenciaSegue" id="NG3-k5-S3b"/>
+                                            <segue destination="osE-5V-Gn9" kind="show" identifier="detailEmergencySegue" id="NG3-k5-S3b"/>
                                         </connections>
                                     </tableViewCell>
                                 </prototypes>
@@ -1771,7 +1796,7 @@
     </scenes>
     <inferredMetricsTieBreakers>
         <segue reference="segue-register"/>
-        <segue reference="segue-login"/>
+        <segue reference="cJk-OW-ffU"/>
     </inferredMetricsTieBreakers>
     <resources>
         <image name="card1" width="662" height="662"/>
@@ -1794,46 +1819,46 @@
             <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="linkColor">
-            <color red="0.0" green="0.47843137254901963" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="secondaryLabelColor">
-            <color red="0.23529411764705882" green="0.23529411764705882" blue="0.2627450980392157" alpha="0.59999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.59999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="secondarySystemGroupedBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="separatorColor">
-            <color red="0.23529411764705882" green="0.23529411764705882" blue="0.2627450980392157" alpha="0.12" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.28999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="systemGray2Color">
-            <color red="0.68235294117647061" green="0.68235294117647061" blue="0.69803921568627447" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.68235294120000001" green="0.68235294120000001" blue="0.69803921570000005" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGray4Color">
-            <color red="0.81960784313725488" green="0.81960784313725488" blue="0.83921568627450982" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.81960784310000001" green="0.81960784310000001" blue="0.83921568629999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGray5Color">
-            <color red="0.89803921568627454" green="0.89803921568627454" blue="0.91764705882352937" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.8980392157" green="0.8980392157" blue="0.91764705879999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGray6Color">
-            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.94901960780000005" green="0.94901960780000005" blue="0.96862745100000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGroupedBackgroundColor">
-            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.94901960780000005" green="0.94901960780000005" blue="0.96862745100000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemRedColor">
-            <color red="1" green="0.2196078431372549" blue="0.23529411764705882" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="1" green="0.23137254900000001" blue="0.18823529410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemTealColor">
-            <color red="0.0" green="0.76470588235294112" blue="0.81568627450980391" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.18823529410000001" green="0.69019607839999997" blue="0.78039215689999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="tertiarySystemFillColor">
-            <color red="0.46274509803921571" green="0.46274509803921571" blue="0.50196078431372548" alpha="0.12" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.46274509800000002" green="0.46274509800000002" blue="0.50196078430000002" alpha="0.12" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="tertiarySystemGroupedBackgroundColor">
-            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.94901960780000005" green="0.94901960780000005" blue="0.96862745100000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>

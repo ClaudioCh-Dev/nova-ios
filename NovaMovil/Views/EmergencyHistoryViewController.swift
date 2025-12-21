@@ -4,7 +4,7 @@ import CoreData
 class EmergencyHistoryViewController: UIViewController {
 
     @IBOutlet weak var historyTableView: UITableView!
-    private var eventos: [EmergencyEventResponse] = []
+    private var eventos: [EmergencyEventSummary] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -13,18 +13,12 @@ class EmergencyHistoryViewController: UIViewController {
         cargarEventos()
     }
 
-    // MARK: - Navegación Segura
-        override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-            if segue.identifier == "detalleEmergenciaSegue",
-               let destino = segue.destination as? EmergencyDetailViewController {
-                if let evento = sender as? EmergencyEventResponse {
-                    destino.evento = evento
-                }
-                else if let cell = sender as? UITableViewCell,
-                        let indexPath = historyTableView.indexPath(for: cell) {
-                    destino.evento = eventos[indexPath.row]
-                }
-            }
+    // MARK: - Navegación
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "detailEmergencySegue",
+           let destino = segue.destination as? EmergencyDetailViewController,
+           let evento = sender as? EmergencyEventSummary {
+            destino.evento = evento
         }
 
     private var token: String? { UserDefaults.standard.string(forKey: "userToken") }
@@ -36,7 +30,8 @@ class EmergencyHistoryViewController: UIViewController {
             return
         }
 
-        EmergencyEventService.shared.obtenerEventosPorUsuario(userId: userId, token: tk) { [weak self] result in
+        // Aquí puedes mostrar un indicador de carga si quieres
+        EmergencyEventService.shared.obtenerEventosPorUsuarioResumen(userId: userId, token: tk) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let lista):
@@ -78,16 +73,31 @@ class EmergencyHistoryViewController: UIViewController {
     }
 
     private func formatearFecha(_ iso: String, formato: String) -> String {
+        // Intento 1: ISO8601 con fracción
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         var fecha = isoFormatter.date(from: iso)
-        
+        // Intento 2: "yyyy-MM-dd'T'HH:mm:ss" (LocalDateTime sin zona)
         if fecha == nil {
-            let alt = ISO8601DateFormatter()
-            alt.formatOptions = [.withInternetDateTime]
-            fecha = alt.date(from: iso)
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+            fecha = df.date(from: iso)
         }
-        
+        // Intento 3: "yyyy-MM-dd'T'HH:mm:ss.SSS" (con milisegundos)
+        if fecha == nil {
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+            fecha = df.date(from: iso)
+        }
+        // Intento 4: con zona "Z"
+        if fecha == nil {
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+            fecha = df.date(from: iso)
+        }
         guard let date = fecha else { return iso }
         let df = DateFormatter()
         df.locale = Locale(identifier: "es_PE")
@@ -107,16 +117,10 @@ extension EmergencyHistoryViewController: UITableViewDataSource, UITableViewDele
             ?? UITableViewCell(style: .subtitle, reuseIdentifier: "cellHistory")
 
         let evt = eventos[indexPath.row]
-        
-        let fechaFormateada = formatearFecha(evt.createdAt, formato: "dd MMM yyyy - HH:mm")
-        
-        cell.textLabel?.text = "Alerta:"
-        cell.textLabel?.font = UIFont.boldSystemFont(ofSize: 16)
-        cell.textLabel?.textColor = UIColor(red: 6/255, green: 78/255, blue: 59/255, alpha: 1.0)
-        
-        cell.detailTextLabel?.text = "\(fechaFormateada) • \(evt.status ?? "")"
-        cell.detailTextLabel?.textColor = .darkGray
-        
+        let creadaTxt = formatearFecha(evt.activatedAt ?? "", formato: "dd/MM/yyyy HH:mm")
+        let cerradaTxt = formatearFecha(evt.closedAt ?? "", formato: "dd/MM/yyyy HH:mm")
+        cell.textLabel?.text = (creadaTxt.isEmpty ? "—" : creadaTxt)
+        cell.detailTextLabel?.text = (evt.status ?? "—") + " • " + (cerradaTxt.isEmpty ? "—" : cerradaTxt)
         cell.accessoryType = .disclosureIndicator
         return cell
     }
@@ -124,6 +128,6 @@ extension EmergencyHistoryViewController: UITableViewDataSource, UITableViewDele
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let evt = eventos[indexPath.row]
-        performSegue(withIdentifier: "detalleEmergenciaSegue", sender: evt)
+        performSegue(withIdentifier: "detailEmergencySegue", sender: evt)
     }
 }
