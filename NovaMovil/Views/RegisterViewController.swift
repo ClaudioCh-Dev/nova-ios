@@ -20,8 +20,14 @@ class RegisterViewController: UIViewController {
         super.viewDidLoad()
         contraView.isSecureTextEntry = true
         contraConfir.isSecureTextEntry = true
-
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(ocultarTeclado))
+        tapGestureRecognizer.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGestureRecognizer)
     }
+    @objc func ocultarTeclado() {
+        view.endEditing(true)
+    }
+    
  
 
     @IBAction func crearConfir(_ sender: Any) {

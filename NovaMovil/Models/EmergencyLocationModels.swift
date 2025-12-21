@@ -8,9 +8,7 @@ struct CreateEmergencyLocationRequest: Codable {
 }
 
 struct EmergencyLocationResponse: Codable {
-    let id: Int
-    let eventId: Int
     let latitude: Double
     let longitude: Double
-    let timestamp: String
+    let timestamp: String?
 }
