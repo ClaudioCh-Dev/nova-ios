@@ -24,7 +24,7 @@ class EmergencyHistoryViewController: UIViewController {
         if segue.identifier == "detalleEmergenciaSegue",
            let destino = segue.destination as? EmergencyDetailViewController,
            let evento = sender as? EmergencyEventSummary {
-            //destino.evento = evento
+            destino.evento = evento
         }
     }
 

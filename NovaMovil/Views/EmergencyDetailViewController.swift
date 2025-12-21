@@ -10,7 +10,7 @@ import MapKit
 
 class EmergencyDetailViewController: UIViewController {
     
-    var evento: EmergencyEventResponse?
+    var evento: EmergencyEventSummary?
     
     
     @IBOutlet weak var dayLabel: UILabel!
@@ -58,21 +58,14 @@ private extension EmergencyDetailViewController {
     func configurarVista() {
         guard let evt = evento else { return }
 
-        let fechaTexto = formatearFecha(evt.createdAt ?? "1", formato: "EEEE, d 'de' MMMM")
+        let fechaTexto = formatearFecha(evt.activatedAt ?? "", formato: "EEEE, d 'de' MMMM")
         dayLabel.text = fechaTexto
 
-        let horaTexto = formatearFecha(evt.createdAt ?? "1", formato: "HH:mm")
+        let horaTexto = formatearFecha(evt.activatedAt ?? "", formato: "HH:mm")
         scheduleLabel.text = horaTexto
 
-        let coord = CLLocationCoordinate2D(latitude: evt.latitude ?? 1, longitude: evt.longitude ?? 1)
-        let region = MKCoordinateRegion(center: coord, latitudinalMeters: 500, longitudinalMeters: 500)
-        mapMapView.setRegion(region, animated: false)
-
-        let pin = MKPointAnnotation()
-        pin.coordinate = coord
-        pin.title = evt.type
-        pin.subtitle = evt.description
-        mapMapView.addAnnotation(pin)
+        // Carga opcional de ubicación más reciente para el evento
+        cargarUltimaUbicacion(eventId: evt.id)
     }
 
     func formatearFecha(_ iso: String, formato: String) -> String {
@@ -91,5 +84,51 @@ private extension EmergencyDetailViewController {
         df.locale = Locale(identifier: "es_PE")
         df.dateFormat = formato
         return df.string(from: date).capitalized
+    }
+}
+
+// MARK: - Ubicación del evento
+private extension EmergencyDetailViewController {
+    var token: String? { UserDefaults.standard.string(forKey: "userToken") }
+
+    func cargarUltimaUbicacion(eventId: Int) {
+        guard let tk = token else { return }
+        EmergencyLocationService.shared.obtenerUbicacionesPorEvento(eventId: eventId, token: tk) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let locations):
+                    var datos = locations
+
+                    if datos.isEmpty {
+                        // PRUEBA: datos vacíos -> usamos ubicaciones de ejemplo para validar recorrido
+                        let formatter = ISO8601DateFormatter()
+                        let now = formatter.string(from: Date())
+                        datos = [
+                            EmergencyLocationResponse(id: 1, emergencyEventId: eventId, latitude: -12.04637, longitude: -77.04279, capturedAt: now),
+                            EmergencyLocationResponse(id: 2, emergencyEventId: eventId, latitude: -12.04845, longitude: -77.03199, capturedAt: now)
+                        ]
+                        // FIN PRUEBA
+                    }
+
+                    var lastCoord: CLLocationCoordinate2D?
+                    for loc in datos {
+                        let coord = CLLocationCoordinate2D(latitude: loc.latitude, longitude: loc.longitude)
+                        lastCoord = coord
+                        let pin = MKPointAnnotation()
+                        pin.coordinate = coord
+                        pin.title = "Ubicación capturada"
+                        pin.subtitle = self?.formatearFecha(loc.capturedAt, formato: "dd/MM/yyyy HH:mm")
+                        self?.mapMapView.addAnnotation(pin)
+                    }
+
+                    if let coord = lastCoord {
+                        let region = MKCoordinateRegion(center: coord, latitudinalMeters: 500, longitudinalMeters: 500)
+                        self?.mapMapView.setRegion(region, animated: false)
+                    }
+                case .failure:
+                    break
+                }
+            }
+        }
     }
 }
