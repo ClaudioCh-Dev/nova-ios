@@ -22,7 +22,12 @@ class ContactsViewController: UIViewController, UITableViewDataSource, UITableVi
         contactosTable.rowHeight = 80 // Altura para que se vea bien el avatar
         contactosTable.separatorStyle = .none // Quitamos líneas feas, usamos diseño limpio
         
-        // Pedir permisos y cargar
+        // Pediremos permisos cuando la vista ya esté en pantalla
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // Pedir permisos y cargar cuando la vista está en la jerarquía
         requestContactsAccess()
     }
     
@@ -115,12 +120,18 @@ class ContactsViewController: UIViewController, UITableViewDataSource, UITableVi
             fetchContacts(store: store)
         case .notDetermined:
             store.requestAccess(for: .contacts) { granted, _ in
-                if granted { self.fetchContacts(store: store) }
+                if granted {
+                    self.fetchContacts(store: store)
+                } else {
+                    DispatchQueue.main.async {
+                        self.mostrarAlertaPermisos()
+                    }
+                }
             }
         case .denied, .restricted:
-            mostrarAlertaPermisos()
-        case .limited:
-            print("algo")
+            DispatchQueue.main.async {
+                self.mostrarAlertaPermisos()
+            }
         @unknown default:
             break
         }
@@ -147,8 +158,24 @@ class ContactsViewController: UIViewController, UITableViewDataSource, UITableVi
     }
     
     private func mostrarAlertaPermisos() {
-        let alert = UIAlertController(title: "Permiso Requerido", message: "Necesitamos acceso a tus contactos para añadirlos a la red de seguridad.", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Ok", style: .default))
-        present(alert, animated: true)
+        let alert = UIAlertController(
+            title: "Permiso de Contactos",
+            message: "Necesitamos acceso a tus contactos para añadirlos a tu red de seguridad. Puedes permitirlo en Ajustes.",
+            preferredStyle: .alert
+        )
+
+        let abrirAjustes = UIAlertAction(title: "Abrir Ajustes", style: .default) { _ in
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url)
+            }
+        }
+        let cancelar = UIAlertAction(title: "Cancelar", style: .cancel, handler: nil)
+
+        alert.addAction(abrirAjustes)
+        alert.addAction(cancelar)
+
+        DispatchQueue.main.async {
+            self.present(alert, animated: true)
+        }
     }
 }
