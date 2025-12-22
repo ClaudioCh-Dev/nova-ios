@@ -78,7 +78,7 @@ class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, 
     }
 }
 
-private extension ProfileViewController {
+extension ProfileViewController {
     @objc func changeProfileImage() {
         // Solo galería
         presentPicker(source: .photoLibrary)
