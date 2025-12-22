@@ -19,6 +19,8 @@
 	<string>Usamos tu ubicación en segundo plano para rastrear emergencias activas.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Permite a NovaMovil rastrear tu ubicación cuando la app esté en segundo plano durante una emergencia.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Accedemos a tus contactos para que puedas crear tu red de seguridad y comunicarte durante emergencias.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
