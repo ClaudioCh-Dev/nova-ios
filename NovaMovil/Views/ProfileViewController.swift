@@ -1,6 +1,6 @@
 import UIKit
 
-class ProfileViewController: UIViewController {
+class ProfileViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     
     @IBOutlet weak var NombresView: UITextField!
@@ -30,9 +30,22 @@ class ProfileViewController: UIViewController {
         nameTextField.isEnabled = false
         emailTextField.isEnabled = false
         profileImageView.contentMode = .scaleAspectFill
-        profileImageView.layer.cornerRadius = profileImageView.bounds.width/2
         profileImageView.clipsToBounds = true
+        // Tap para cambiar imagen de perfil
+        let tap = UITapGestureRecognizer(target: self, action: #selector(changeProfileImage))
+        profileImageView.isUserInteractionEnabled = true
+        profileImageView.addGestureRecognizer(tap)
+
+        // Cargar imagen guardada localmente si existe
+        if let saved = loadProfileImage() {
+            profileImageView.image = saved
+        }
         cargarUsuario()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        profileImageView.layer.cornerRadius = profileImageView.bounds.width / 2
     }
     
     /*@IBAction func cerrarSesion(_ sender: Any) {
@@ -65,7 +78,60 @@ class ProfileViewController: UIViewController {
     }
 }
 
-private extension ProfileViewController {
+extension ProfileViewController {
+    @objc func changeProfileImage() {
+        // Solo galería
+        presentPicker(source: .photoLibrary)
+    }
+
+    func presentPicker(source: UIImagePickerController.SourceType) {
+        let picker = UIImagePickerController()
+        picker.sourceType = source
+        picker.delegate = self
+        picker.allowsEditing = true
+        // iPad: configurar popover si es fototeca
+        if let pop = picker.popoverPresentationController {
+            pop.sourceView = profileImageView
+            pop.sourceRect = profileImageView.bounds
+        }
+        present(picker, animated: true)
+    }
+
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        let image = (info[.editedImage] as? UIImage) ?? (info[.originalImage] as? UIImage)
+        if let img = image {
+            profileImageView.image = img
+            _ = saveProfileImage(img)
+        }
+        dismiss(animated: true)
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        dismiss(animated: true)
+    }
+
+    func saveProfileImage(_ image: UIImage) -> Bool {
+        guard let data = image.jpegData(compressionQuality: 0.9) else { return false }
+        let url = getDocumentsDirectory().appendingPathComponent("profile.jpg")
+        do {
+            try data.write(to: url, options: .atomic)
+            UserDefaults.standard.set("profile.jpg", forKey: "profileImageFilename")
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    func loadProfileImage() -> UIImage? {
+        let filename = UserDefaults.standard.string(forKey: "profileImageFilename") ?? "profile.jpg"
+        let url = getDocumentsDirectory().appendingPathComponent(filename)
+        return UIImage(contentsOfFile: url.path)
+    }
+
+    func getDocumentsDirectory() -> URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    }
+
     func cargarUsuario() {
         token = UserDefaults.standard.string(forKey: "userToken")
         userId = UserDefaults.standard.integer(forKey: "userId")
@@ -79,6 +145,7 @@ private extension ProfileViewController {
                     self?.nameTextField.text = detalle.fullName
                     self?.emailTextField.text = detalle.email
                     if self?.profileImageView.image == nil {
+                        // Si no hay imagen guardada ni remota, usar un placeholder
                         self?.profileImageView.image = UIImage(systemName: "person.circle.fill")
                     }
                 case .failure:

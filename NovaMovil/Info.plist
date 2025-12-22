@@ -44,5 +44,7 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Necesitamos acceder a tu galería para elegir tu foto de perfil.</string>
 </dict>
 </plist>
