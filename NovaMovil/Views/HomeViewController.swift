@@ -304,14 +304,16 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     }
 
     func enviarMensajesWhatsApp() {
-        guard let token = UserDefaults.standard.string(forKey: "userToken") else { return }
+        guard let token = UserDefaults.standard.string(forKey: "userToken"),
+              let userId = UserDefaults.standard.object(forKey: "userId") as? Int else { return }
         
         let lat = locationManager.location?.coordinate.latitude ?? 0.0
         let lon = locationManager.location?.coordinate.longitude ?? 0.0
         let link = "https://maps.google.com/?q=\(lat),\(lon)"
 
         // Alinear con backend existente: POST /api/contacts/emergency/alert?location=<link>
-        let urlString = "\(Conexion.baseURL)/api/contacts/emergency/alert?location=\(link.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? link)"
+        let encodedLocation = link.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? link
+        let urlString = "\(Conexion.baseURL)/api/contacts/emergency/alert?location=\(encodedLocation)&userId=\(userId)"
         guard let url = URL(string: urlString) else { return }
 
         var request = URLRequest(url: url)
