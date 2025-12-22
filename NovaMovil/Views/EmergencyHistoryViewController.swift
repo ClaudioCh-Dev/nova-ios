@@ -40,7 +40,15 @@ class EmergencyHistoryViewController: UIViewController {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let lista):
-                    self?.eventos = lista
+                    // 1) Filtrar solo eventos inactivos/cerrados
+                    let inactivos = lista.filter { self?.esInactivo($0) ?? false }
+                    // 2) Ordenar de más reciente a más antiguo
+                    let ordenados = inactivos.sorted { (a, b) in
+                        let da = self?.parseISODate(a.activatedAt) ?? Date.distantPast
+                        let db = self?.parseISODate(b.activatedAt) ?? Date.distantPast
+                        return da > db
+                    }
+                    self?.eventos = ordenados
                     self?.historyTableView.reloadData()
                 case .failure(let error):
                     // Manejo del error
@@ -81,6 +89,45 @@ class EmergencyHistoryViewController: UIViewController {
         df.locale = Locale(identifier: "es_PE")
         df.dateFormat = formato
         return df.string(from: date)
+    }
+    
+    private func esInactivo(_ evt: EmergencyEventSummary) -> Bool {
+        if let s = evt.status?.lowercased() {
+            // Abarcar variantes posibles del backend
+            if ["inactive", "inactivo", "resolved", "resuelto", "closed", "cerrado", "finalized", "finalizado"].contains(s) {
+                return true
+            }
+            if ["active", "activo"].contains(s) { return false }
+        }
+        // Fallback lógico: si tiene fecha de cierre, lo consideramos inactivo
+        return (evt.closedAt?.isEmpty == false)
+    }
+
+    private func parseISODate(_ iso: String?) -> Date? {
+        guard let iso = iso, !iso.isEmpty else { return nil }
+        // Intento 1: ISO8601 con fracción
+        let iso1 = ISO8601DateFormatter()
+        iso1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = iso1.date(from: iso) { return d }
+        // Intento 2: ISO8601 simple
+        let iso2 = ISO8601DateFormatter()
+        iso2.formatOptions = [.withInternetDateTime]
+        if let d = iso2.date(from: iso) { return d }
+        // Intento 3: "yyyy-MM-dd'T'HH:mm:ss"
+        let df1 = DateFormatter()
+        df1.locale = Locale(identifier: "en_US_POSIX")
+        df1.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        if let d = df1.date(from: iso) { return d }
+        // Intento 4: con milisegundos
+        let df2 = DateFormatter()
+        df2.locale = Locale(identifier: "en_US_POSIX")
+        df2.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        if let d = df2.date(from: iso) { return d }
+        // Intento 5: con zona Z
+        let df3 = DateFormatter()
+        df3.locale = Locale(identifier: "en_US_POSIX")
+        df3.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+        return df3.date(from: iso)
     }
 }
 
