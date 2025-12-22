@@ -59,6 +59,12 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     }
 
     func guardarContactoEnCoreData(nombre: String, telefono: String, id: String) {
+        // Validación adicional por si se llama directo
+        if contactoExiste(telefono: telefono, id: id) {
+            presentarAlerta(mensaje: "Este contacto ya fue agregado.")
+            return
+        }
+
         let nuevoContacto = ContactoEntity(context: CoreDataManager.shared.context)
         nuevoContacto.nombre = nombre
         nuevoContacto.telefono = telefono
@@ -299,33 +305,29 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
 
     func enviarMensajesWhatsApp() {
         guard let token = UserDefaults.standard.string(forKey: "userToken") else { return }
-        let numeros = contactosGuardados.compactMap { $0.telefono }
-        
-        guard !numeros.isEmpty else { return }
-        
-        let url = URL(string: "\(Conexion.baseURL)/api/notifications/broadcast")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
         let lat = locationManager.location?.coordinate.latitude ?? 0.0
         let lon = locationManager.location?.coordinate.longitude ?? 0.0
         let link = "https://maps.google.com/?q=\(lat),\(lon)"
-        
-        let body: [String: Any] = [
-            "phoneNumbers": numeros,
-            "userName": "Usuario Nova",
-            "googleMapsLink": link
-        ]
-        
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        
-        URLSession.shared.dataTask(with: request) { data, _, error in
-            if error == nil {
-                print("✅ Alerta de WhatsApp enviada al backend")
+
+        // Alinear con backend existente: POST /api/contacts/emergency/alert?location=<link>
+        let urlString = "\(Conexion.baseURL)/api/contacts/emergency/alert?location=\(link.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? link)"
+        guard let url = URL(string: urlString) else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            if let error = error {
+                print("❌ Error enviando alerta: \(error)")
+                return
+            }
+            if let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) {
+                print("✅ Alerta WhatsApp solicitada al backend")
             } else {
-                print("❌ Error enviando alerta: \(error!)")
+                let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+                print("⚠️ Respuesta no exitosa al enviar alerta (\(code))")
             }
         }.resume()
     }
@@ -352,6 +354,58 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         soundTimer = nil
     }
     
+    // MARK: - Gestión de contactos (duplicados y eliminación)
+    func contactoExiste(telefono: String, id: String) -> Bool {
+        let fetch: NSFetchRequest<ContactoEntity> = ContactoEntity.fetchRequest()
+        let telPred = NSPredicate(format: "telefono == %@", telefono)
+        let idPred = NSPredicate(format: "id == %@", id)
+        fetch.predicate = NSCompoundPredicate(orPredicateWithSubpredicates: [telPred, idPred])
+        do {
+            let count = try CoreDataManager.shared.context.count(for: fetch)
+            return count > 0
+        } catch {
+            return false
+        }
+    }
+
+    func eliminarContactoLocal(_ contacto: ContactoEntity) {
+        CoreDataManager.shared.context.delete(contacto)
+        CoreDataManager.shared.saveContext()
+        cargarContactosLocales()
+    }
+
+    func eliminarContactoRemoto(telefono: String, completion: @escaping (Bool) -> Void) {
+        guard let userId = UserDefaults.standard.object(forKey: "userId") as? Int,
+              let token = UserDefaults.standard.string(forKey: "userToken") else {
+            completion(false)
+            return
+        }
+
+        // Buscar en BD el contacto por teléfono y eliminar por ID
+        ContactService.shared.obtenerContactosPorUsuario(userId: userId, token: token) { result in
+            switch result {
+            case .success(let contactosBD):
+                let objetivo = contactosBD.first { self.normalizarNumero($0.phoneNumber ?? "") == self.normalizarNumero(telefono) }
+                guard let id = objetivo?.id else { completion(false); return }
+                ContactService.shared.eliminarContacto(id: id, token: token) { delResult in
+                    switch delResult {
+                    case .success:
+                        completion(true)
+                    case .failure:
+                        completion(false)
+                    }
+                }
+            case .failure:
+                completion(false)
+            }
+        }
+    }
+
+    private func normalizarNumero(_ numero: String) -> String {
+        let chars = numero.filter { ("+".contains($0)) || ($0.isNumber) }
+        return chars
+    }
+
     func reproducirSonidoYVibracion() {
         AudioServicesPlaySystemSound(1005)
         AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
@@ -392,8 +446,38 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
                 let nombreCompleto = "\(contact.givenName) \(contact.familyName)"
                 let telefono = contact.phoneNumbers.first?.value.stringValue ?? ""
                 let id = contact.identifier
-                
+                let email = (contact.emailAddresses.first?.value as String?)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                let emailValido = (email?.isEmpty == false) ? email! : "unknown@novamovil.local"
+
+                // Evitar duplicados por teléfono o id
+                if let yaExiste = self?.contactoExiste(telefono: telefono, id: id), yaExiste {
+                    self?.presentarAlerta(mensaje: "Este contacto ya está en tu red de seguridad.")
+                    return
+                }
+
                 self?.guardarContactoEnCoreData(nombre: nombreCompleto, telefono: telefono, id: id)
+
+                // Sincronizar con backend (BD) para mayor control
+                if let userId = UserDefaults.standard.object(forKey: "userId") as? Int,
+                   let token = UserDefaults.standard.string(forKey: "userToken") {
+                    let req = CreateContactRequest(
+                        userId: userId,
+                        fullName: nombreCompleto,
+                        phoneNumber: telefono.isEmpty ? nil : telefono,
+                        email: emailValido,
+                        enableWhatsapp: true
+                    )
+                    ContactService.shared.crearContacto(datos: req, token: token) { result in
+                        switch result {
+                        case .success:
+                            print("✅ Contacto sincronizado en BD")
+                        case .failure(let error):
+                            print("❌ Error sincronizando contacto: \(error)")
+                        }
+                    }
+                } else {
+                    print("⚠️ No se pudo sincronizar contacto: faltan userId/token")
+                }
             }
             contactsVC.modalPresentationStyle = .pageSheet
             present(contactsVC, animated: true)
@@ -475,5 +559,28 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
         return 10
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        let contacto = contactosGuardados[indexPath.item]
+        let alerta = UIAlertController(
+            title: "Quitar contacto",
+            message: "¿Deseas quitar a \(contacto.nombre ?? "este contacto") de tu red de seguridad?",
+            preferredStyle: .actionSheet
+        )
+        let eliminar = UIAlertAction(title: "Eliminar", style: .destructive) { _ in
+            let telefono = contacto.telefono ?? ""
+            self.eliminarContactoRemoto(telefono: telefono) { ok in
+                DispatchQueue.main.async {
+                    if ok { self.eliminarContactoLocal(contacto) }
+                    else { self.presentarAlerta(mensaje: "No se pudo eliminar en el servidor. Inténtalo nuevamente.") }
+                }
+            }
+        }
+        let cancelar = UIAlertAction(title: "Cancelar", style: .cancel)
+        alerta.addAction(eliminar)
+        alerta.addAction(cancelar)
+        present(alerta, animated: true)
     }
 }

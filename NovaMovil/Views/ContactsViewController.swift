@@ -138,7 +138,12 @@ class ContactsViewController: UIViewController, UITableViewDataSource, UITableVi
     }
     
     private func fetchContacts(store: CNContactStore) {
-        let keys = [CNContactGivenNameKey, CNContactFamilyNameKey, CNContactPhoneNumbersKey] as [CNKeyDescriptor]
+        let keys = [
+            CNContactGivenNameKey,
+            CNContactFamilyNameKey,
+            CNContactPhoneNumbersKey,
+            CNContactEmailAddressesKey
+        ] as [CNKeyDescriptor]
         let request = CNContactFetchRequest(keysToFetch: keys)
         
         DispatchQueue.global(qos: .userInitiated).async {
