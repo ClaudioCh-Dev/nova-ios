@@ -329,6 +329,8 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         request.httpMethod = "POST"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
+        print("📲 Enviando alerta WhatsApp a contactos...")
+
         URLSession.shared.dataTask(with: request) { _, response, error in
             if let error = error {
                 print("❌ Error enviando alerta: \(error)")
