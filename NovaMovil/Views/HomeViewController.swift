@@ -153,7 +153,6 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
             if !modoDiscreto { iniciarAlarmaSistema() }
             
             activarEmergenciaAPI()
-            enviarMensajesWhatsApp()
             
             actualizarUIBotonPrincipal()
             
@@ -166,6 +165,9 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
             if let eventId = currentEventId {
                 cerrarEmergenciaAPI(eventId: eventId)
             }
+            // Limpiar estado para que el siguiente evento inicie sin filtros previos
+            lastSentAt = nil
+            lastSentCoord = nil
             
             actualizarUIBotonPrincipal()
         }
@@ -197,6 +199,9 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
             case .success(let response):
                 self?.currentEventId = response.id
                 print("✅ Evento creado ID: \(response.id)")
+                // Resetear marcadores para garantizar primer envío del nuevo evento
+                self?.lastSentAt = nil
+                self?.lastSentCoord = nil
                 
                 self?.guardarHistorialLocal(id: Int64(response.id), tipo: "Pánico")
                 DispatchQueue.main.async {
@@ -205,6 +210,8 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
                     self?.locationManager.desiredAccuracy = kCLLocationAccuracyBest
                 }
                 self?.iniciarRastreoUbicacion()
+                // Envío inmediato (y WhatsApp tras éxito) sin esperar hasta 10s
+                self?.enviarUbicacionActual()
                 
             case .failure(let error):
                 print("❌ Error creando evento: \(error)")
@@ -278,6 +285,8 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
                 self?.lastSentAt = now
                 self?.lastSentCoord = location.coordinate
                 print("📍 Trace enviado")
+                // Enviar alerta WhatsApp anclada al mismo timer y condiciones
+                self?.enviarMensajesWhatsApp(location: location)
             case .failure(let error):
                 print("⚠️ Error enviando trace: \(error)")
             }
@@ -303,12 +312,12 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         CoreDataManager.shared.saveContext()
     }
 
-    func enviarMensajesWhatsApp() {
+    func enviarMensajesWhatsApp(location: CLLocation) {
         guard let token = UserDefaults.standard.string(forKey: "userToken"),
               let userId = UserDefaults.standard.object(forKey: "userId") as? Int else { return }
-        
-        let lat = locationManager.location?.coordinate.latitude ?? 0.0
-        let lon = locationManager.location?.coordinate.longitude ?? 0.0
+
+        let lat = location.coordinate.latitude
+        let lon = location.coordinate.longitude
         let link = "https://maps.google.com/?q=\(lat),\(lon)"
 
         // Alinear con backend existente: POST /api/contacts/emergency/alert?location=<link>
