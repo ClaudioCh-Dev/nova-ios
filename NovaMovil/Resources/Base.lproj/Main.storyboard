@@ -569,25 +569,38 @@
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1v2-Pk-Fr0">
+                                <rect key="frame" x="120" y="610" width="154" height="35"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="filled" title="Reproducir audio"/>
+                                <connections>
+                                    <action selector="accionReproducirAudio:" destination="osE-5V-Gn9" eventType="touchUpInside" id="AlJ-Vb-Ina"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="C1o-Sw-QTP"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="1v2-Pk-Fr0" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" constant="120" id="0sE-cY-neQ"/>
                             <constraint firstItem="LQZ-Nf-0qa" firstAttribute="centerX" secondItem="AJS-tg-qIW" secondAttribute="centerX" id="2Lb-EX-o6K"/>
+                            <constraint firstItem="1v2-Pk-Fr0" firstAttribute="top" secondItem="C1o-Sw-QTP" secondAttribute="top" constant="551" id="5eM-nP-V2V"/>
                             <constraint firstItem="3o7-ff-ZxL" firstAttribute="trailing" secondItem="C1o-Sw-QTP" secondAttribute="trailing" id="6dZ-Rh-zu4"/>
                             <constraint firstItem="C1o-Sw-QTP" firstAttribute="bottom" secondItem="3o7-ff-ZxL" secondAttribute="bottom" constant="50" id="DFa-m3-bcw"/>
                             <constraint firstItem="C1o-Sw-QTP" firstAttribute="trailing" secondItem="y98-HL-fES" secondAttribute="trailing" id="H9q-3f-xe8"/>
                             <constraint firstItem="LQZ-Nf-0qa" firstAttribute="bottom" secondItem="C1o-Sw-QTP" secondAttribute="bottom" id="I8b-kz-ABA"/>
                             <constraint firstItem="3o7-ff-ZxL" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" id="Ox0-AO-yZx"/>
+                            <constraint firstItem="C1o-Sw-QTP" firstAttribute="trailing" secondItem="1v2-Pk-Fr0" secondAttribute="trailing" constant="119" id="SQN-XW-zhb"/>
                             <constraint firstItem="LQZ-Nf-0qa" firstAttribute="trailing" secondItem="C1o-Sw-QTP" secondAttribute="trailing" id="lBk-KF-uTN"/>
                             <constraint firstItem="3o7-ff-ZxL" firstAttribute="top" secondItem="y98-HL-fES" secondAttribute="bottom" constant="10" id="nV4-Op-t4M"/>
                             <constraint firstItem="LQZ-Nf-0qa" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" id="sr9-LS-oPu"/>
+                            <constraint firstItem="y98-HL-fES" firstAttribute="top" secondItem="1v2-Pk-Fr0" secondAttribute="bottom" constant="36" id="y6U-rV-Fr4"/>
                             <constraint firstItem="y98-HL-fES" firstAttribute="leading" secondItem="C1o-Sw-QTP" secondAttribute="leading" id="zCv-kD-nz0"/>
                             <constraint firstItem="LQZ-Nf-0qa" firstAttribute="centerY" secondItem="AJS-tg-qIW" secondAttribute="centerY" id="zqw-YG-jZ9"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="zGC-C4-3He"/>
                     <connections>
+                        <outlet property="btnReproducirAudio" destination="1v2-Pk-Fr0" id="rxX-5x-fr1"/>
                         <outlet property="dayLabel" destination="y98-HL-fES" id="Kyf-g5-teq"/>
                         <outlet property="mapMapView" destination="LQZ-Nf-0qa" id="T2j-kO-whL"/>
                         <outlet property="scheduleLabel" destination="3o7-ff-ZxL" id="o1E-c7-Iwa"/>
@@ -1117,13 +1130,13 @@
                                                 <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="4" translatesAutoresizingMaskIntoConstraints="NO" id="TextStack">
                                                     <rect key="frame" x="86" y="20.000000000000004" width="233" height="40.333333333333343"/>
                                                     <subviews>
-                                                        <label opaque="NO" userInteractionEnabled="NO" tag="101" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Nombre Contacto" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="NameCellLabel">
+                                                        <label opaque="NO" userInteractionEnabled="NO" tag="101" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" text="Nombre Contacto" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="NameCellLabel">
                                                             <rect key="frame" x="0.0" y="0.0" width="233" height="19.333333333333332"/>
                                                             <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="16"/>
                                                             <nil key="textColor"/>
                                                             <nil key="highlightedColor"/>
                                                         </label>
-                                                        <label opaque="NO" userInteractionEnabled="NO" tag="102" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="+51 987 654 321" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PhoneCellLabel">
+                                                        <label opaque="NO" userInteractionEnabled="NO" tag="102" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" text="+51 987 654 321" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PhoneCellLabel">
                                                             <rect key="frame" x="0.0" y="23.333333333333336" width="233" height="17"/>
                                                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                                             <color key="textColor" systemColor="secondaryLabelColor"/>
@@ -1641,46 +1654,46 @@
             <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="linkColor">
-            <color red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.0" green="0.47843137254901963" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="secondaryLabelColor">
-            <color red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.59999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.23529411764705882" green="0.23529411764705882" blue="0.2627450980392157" alpha="0.59999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="secondarySystemGroupedBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="separatorColor">
-            <color red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.28999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.23529411764705882" green="0.23529411764705882" blue="0.2627450980392157" alpha="0.12" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="systemGray2Color">
-            <color red="0.68235294120000001" green="0.68235294120000001" blue="0.69803921570000005" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.68235294117647061" green="0.68235294117647061" blue="0.69803921568627447" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGray4Color">
-            <color red="0.81960784310000001" green="0.81960784310000001" blue="0.83921568629999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.81960784313725488" green="0.81960784313725488" blue="0.83921568627450982" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGray5Color">
-            <color red="0.8980392157" green="0.8980392157" blue="0.91764705879999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.89803921568627454" green="0.89803921568627454" blue="0.91764705882352937" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGray6Color">
-            <color red="0.94901960780000005" green="0.94901960780000005" blue="0.96862745100000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGroupedBackgroundColor">
-            <color red="0.94901960780000005" green="0.94901960780000005" blue="0.96862745100000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemRedColor">
-            <color red="1" green="0.23137254900000001" blue="0.18823529410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="1" green="0.2196078431372549" blue="0.23529411764705882" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemTealColor">
-            <color red="0.18823529410000001" green="0.69019607839999997" blue="0.78039215689999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.0" green="0.76470588235294112" blue="0.81568627450980391" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="tertiarySystemFillColor">
-            <color red="0.46274509800000002" green="0.46274509800000002" blue="0.50196078430000002" alpha="0.12" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.46274509803921571" green="0.46274509803921571" blue="0.50196078431372548" alpha="0.12" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="tertiarySystemGroupedBackgroundColor">
-            <color red="0.94901960780000005" green="0.94901960780000005" blue="0.96862745100000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>
