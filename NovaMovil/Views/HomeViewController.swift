@@ -3,8 +3,10 @@ import CoreData
 import MapKit
 import CoreLocation
 import AudioToolbox
+import AVFoundation
+import Contacts
 
-class HomeViewController: UIViewController, MKMapViewDelegate {
+class HomeViewController: UIViewController, MKMapViewDelegate, AVAudioRecorderDelegate {
 
     var usuarioSesion: UserDetail?
 
@@ -31,6 +33,9 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     private var lastSentCoord: CLLocationCoordinate2D?
     private let minDistanceMeters: CLLocationDistance = 10
     private var bgTaskId: UIBackgroundTaskIdentifier = .invalid
+    
+    var audioRecorder: AVAudioRecorder?
+    var nombreArchivoAudioActual: String?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -40,6 +45,23 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         actualizarUIBotonPrincipal()
         cargarContactosLocales()
         NotificationCenter.default.addObserver(self, selector: #selector(handleEmergencyShortcut), name: NSNotification.Name("TriggerNovaEmergency"), object: nil)
+        solicitarPermisosAudio()
+    }
+    
+    func solicitarPermisosAudio() {
+        if #available(iOS 17.0, *) {
+            AVAudioApplication.requestRecordPermission { allowed in
+                if !allowed {
+                    print("Permiso de micrófono denegado (iOS 17+)")
+                }
+            }
+        } else {
+            AVAudioSession.sharedInstance().requestRecordPermission { allowed in
+                if !allowed {
+                    print("Permiso de micrófono denegado (Legacy)")
+                }
+            }
+        }
     }
     
     @objc func handleEmergencyShortcut() {
@@ -52,14 +74,16 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         let fetchRequest: NSFetchRequest<ContactoEntity> = ContactoEntity.fetchRequest()
         do {
             contactosGuardados = try CoreDataManager.shared.context.fetch(fetchRequest)
-            self.panelContactos.reloadData()
+            DispatchQueue.main.async {
+                self.panelContactos.reloadData()
+                self.panelContactos.layoutIfNeeded()
+            }
         } catch {
             print("Error cargando contactos: \(error)")
         }
     }
 
     func guardarContactoEnCoreData(nombre: String, telefono: String, id: String) {
-        // Validación adicional por si se llama directo
         if contactoExiste(telefono: telefono, id: id) {
             presentarAlerta(mensaje: "Este contacto ya fue agregado.")
             return
@@ -76,7 +100,7 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     private func setupMap() {
         mapView.delegate = self
         locationManager.delegate = self
-        locationManager.requestWhenInUseAuthorization()
+        locationManager.requestAlwaysAuthorization()
         locationManager.startUpdatingLocation()
         mapView.showsUserLocation = true
 
@@ -89,6 +113,12 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     private func setupCollectionView() {
         panelContactos.delegate = self
         panelContactos.dataSource = self
+        if let layout = panelContactos.collectionViewLayout as? UICollectionViewFlowLayout {
+            layout.scrollDirection = .horizontal
+            layout.minimumInteritemSpacing = 10
+            layout.minimumLineSpacing = 10
+            layout.sectionInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
+        }
     }
 
     @IBAction func panelTapped(_ sender: UITapGestureRecognizer) {
@@ -115,26 +145,19 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     }
 
     private func presentarAlerta(mensaje: String) {
-        let alerta = UIAlertController(
-            title: "Atención",
-            message: mensaje,
-            preferredStyle: .alert
-        )
-        alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
-        present(alerta, animated: true)
+        DispatchQueue.main.async {
+            let alerta = UIAlertController(title: "Atención", message: mensaje, preferredStyle: .alert)
+            alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
+            self.present(alerta, animated: true)
+        }
     }
 
     @IBAction func funcionBtnModoDiscreto(_ sender: UIButton){
         let estadoActual = UserDefaults.standard.bool(forKey: "modoDiscreto")
         let nuevoEstado = !estadoActual
         UserDefaults.standard.set(nuevoEstado, forKey: "modoDiscreto")
-        
         actualizarEstiloModoDiscreto()
-        
-        let mensaje = nuevoEstado
-            ? "Modo Discreto ACTIVADO. La alarma será silenciosa."
-            : "Modo Discreto DESACTIVADO. La alarma emitirá sonido."
-        
+        let mensaje = nuevoEstado ? "Modo Discreto ACTIVADO. La alarma será silenciosa." : "Modo Discreto DESACTIVADO. La alarma emitirá sonido."
         presentarAlerta(mensaje: mensaje)
     }
     
@@ -148,44 +171,69 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         let modoDiscreto = UserDefaults.standard.bool(forKey: "modoDiscreto")
         
         if isServiceActive {
-            print("🚨 INICIANDO PROTOCOLO DE EMERGENCIA")
-            
             if !modoDiscreto { iniciarAlarmaSistema() }
-            
             activarEmergenciaAPI()
-            
+            iniciarGrabacionAudio()
             actualizarUIBotonPrincipal()
-            
         } else {
-            print("✅ FINALIZANDO EMERGENCIA")
-            
             detenerAlarmaSistema()
             locationUpdateTimer?.invalidate()
-            
+            detenerGrabacionAudio()
             if let eventId = currentEventId {
                 cerrarEmergenciaAPI(eventId: eventId)
+                guardarHistorialLocal(id: Int64(eventId), tipo: "Pánico", audioPath: nombreArchivoAudioActual)
             }
-            // Limpiar estado para que el siguiente evento inicie sin filtros previos
             lastSentAt = nil
             lastSentCoord = nil
-            
+            nombreArchivoAudioActual = nil
             actualizarUIBotonPrincipal()
         }
+    }
+    
+    func iniciarGrabacionAudio() {
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.playAndRecord, mode: .default)
+            try session.setActive(true)
+            
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
+            let fechaString = dateFormatter.string(from: Date())
+            nombreArchivoAudioActual = "audio_\(fechaString).m4a"
+            
+            let path = getDocumentsDirectory().appendingPathComponent(nombreArchivoAudioActual!)
+            
+            let settings = [
+                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+                AVSampleRateKey: 12000,
+                AVNumberOfChannelsKey: 1,
+                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+            ]
+            
+            audioRecorder = try AVAudioRecorder(url: path, settings: settings)
+            audioRecorder?.delegate = self
+            audioRecorder?.record()
+            print("🎙️ Grabando audio en: \(path)")
+        } catch {
+            print("❌ Error al iniciar grabación: \(error)")
+        }
+    }
+    
+    func detenerGrabacionAudio() {
+        audioRecorder?.stop()
+        audioRecorder = nil
+        print("🛑 Grabación detenida")
+    }
+    
+    func getDocumentsDirectory() -> URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
     
     func activarEmergenciaAPI() {
         guard let token = UserDefaults.standard.string(forKey: "userToken"),
               let userId = UserDefaults.standard.integer(forKey: "userId") as? Int,
-              let location = locationManager.location else {
-            print("❌ Datos faltantes para API")
-            return
-        }
+              let location = locationManager.location else { return }
 
-        let status = locationManager.authorizationStatus
-        if status == .authorizedWhenInUse {
-            locationManager.requestAlwaysAuthorization()
-        }
-        
         let request = CreateEmergencyEventRequest(
             userId: userId,
             type: "TAP",
@@ -198,23 +246,15 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
             switch result {
             case .success(let response):
                 self?.currentEventId = response.id
-                print("✅ Evento creado ID: \(response.id)")
-                // Resetear marcadores para garantizar primer envío del nuevo evento
-                self?.lastSentAt = nil
-                self?.lastSentCoord = nil
-                
-                self?.guardarHistorialLocal(id: Int64(response.id), tipo: "Pánico")
                 DispatchQueue.main.async {
                     self?.locationManager.allowsBackgroundLocationUpdates = true
                     if #available(iOS 11.0, *) { self?.locationManager.showsBackgroundLocationIndicator = true }
                     self?.locationManager.desiredAccuracy = kCLLocationAccuracyBest
                 }
                 self?.iniciarRastreoUbicacion()
-                // Envío inmediato (y WhatsApp tras éxito) sin esperar hasta 10s
                 self?.enviarUbicacionActual()
-                
             case .failure(let error):
-                print("❌ Error creando evento: \(error)")
+                print("Error creando evento: \(error)")
             }
         }
     }
@@ -222,16 +262,9 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     func iniciarRastreoUbicacion() {
         locationUpdateTimer?.invalidate()
         locationUpdateTimer = nil
-
-        guard ConfiguracionViewController.isLocationEnabled() else {
-            print("⚠️ Rastreo no iniciado: ubicación desactivada en ajustes de la app")
-            return
-        }
+        guard ConfiguracionViewController.isLocationEnabled() else { return }
         let status = locationManager.authorizationStatus
-        guard status == .authorizedAlways || status == .authorizedWhenInUse else {
-            print("⚠️ Rastreo no iniciado: permisos de ubicación no concedidos")
-            return
-        }
+        guard status == .authorizedAlways || status == .authorizedWhenInUse else { return }
 
         locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
             self?.enviarUbicacionActual()
@@ -240,9 +273,7 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     
     func enviarUbicacionActual() {
         guard isServiceActive else { return }
-        guard let eventId = currentEventId,
-              let location = locationManager.location,
-              let token = UserDefaults.standard.string(forKey: "userToken") else { return }
+        guard let location = locationManager.location else { return }
         enviarUbicacionActual(location)
     }
 
@@ -251,9 +282,8 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
               let token = UserDefaults.standard.string(forKey: "userToken") else { return }
 
         let now = Date()
-        if let last = lastSentAt, now.timeIntervalSince(last) < minSendInterval {
-            return
-        }
+        if let last = lastSentAt, now.timeIntervalSince(last) < minSendInterval { return }
+        
         if let lastCoord = lastSentCoord {
             let lastLocation = CLLocation(latitude: lastCoord.latitude, longitude: lastCoord.longitude)
             let distance = lastLocation.distance(from: location)
@@ -284,74 +314,81 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
             case .success:
                 self?.lastSentAt = now
                 self?.lastSentCoord = location.coordinate
-                print("📍 Trace enviado")
-                // Enviar alerta WhatsApp anclada al mismo timer y condiciones
                 self?.enviarMensajesWhatsApp(location: location)
             case .failure(let error):
-                print("⚠️ Error enviando trace: \(error)")
+                print("Error enviando trace: \(error)")
             }
         }
     }
 
     func cerrarEmergenciaAPI(eventId: Int) {
         guard let token = UserDefaults.standard.string(forKey: "userToken") else { return }
-        
         EmergencyEventService.shared.resolverEvento(id: eventId, token: token) { result in
             switch result {
-            case .success: print("✅ Evento cerrado en servidor")
-            case .failure(let error): print("❌ Error cerrando evento: \(error)")
+            case .success: break
+            case .failure(let error): print("Error cerrando evento: \(error)")
             }
         }
     }
 
-    func guardarHistorialLocal(id: Int64, tipo: String) {
+    func guardarHistorialLocal(id: Int64, tipo: String, audioPath: String?) {
         let historial = HistorialEntity(context: CoreDataManager.shared.context)
         historial.eventId = id
         historial.fecha = Date()
         historial.tipo = tipo
+        historial.audioPath = audioPath
         CoreDataManager.shared.saveContext()
+        print("💾 Historial guardado con audio: \(audioPath ?? "Ninguno")")
     }
 
     func enviarMensajesWhatsApp(location: CLLocation) {
         guard let token = UserDefaults.standard.string(forKey: "userToken"),
-              let userId = UserDefaults.standard.object(forKey: "userId") as? Int else { return }
-
+              let userId = UserDefaults.standard.object(forKey: "userId") as? Int else {
+            print("⚠️ Faltan datos de sesión para enviar alerta")
+            return
+        }
         let lat = location.coordinate.latitude
         let lon = location.coordinate.longitude
-        let link = "https://maps.google.com/?q=\(lat),\(lon)"
-
-        // Alinear con backend existente: POST /api/contacts/emergency/alert?location=<link>
-        let encodedLocation = link.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? link
+        let linkGoogleMaps = "https://www.google.com/maps/search/?api=1&query=\(lat),\(lon)"
+        let encodedLocation = linkGoogleMaps.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? linkGoogleMaps
         let urlString = "\(Conexion.baseURL)/api/contacts/emergency/alert?location=\(encodedLocation)&userId=\(userId)"
+        
         guard let url = URL(string: urlString) else { return }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        print("📲 Enviando alerta WhatsApp a contactos...")
+        print("📤 Enviando alerta a: \(urlString)")
 
-        URLSession.shared.dataTask(with: request) { _, response, error in
+        URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
-                print("❌ Error enviando alerta: \(error)")
+                print("❌ Error de red enviando alerta: \(error.localizedDescription)")
                 return
             }
-            if let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) {
-                print("✅ Alerta WhatsApp solicitada al backend")
-            } else {
-                let code = (response as? HTTPURLResponse)?.statusCode ?? -1
-                print("⚠️ Respuesta no exitosa al enviar alerta (\(code))")
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("📡 Estado HTTP Backend: \(httpResponse.statusCode)")
+                if !(200...299).contains(httpResponse.statusCode) {
+                    if let data = data, let body = String(data: data, encoding: .utf8) {
+                        print("⚠️ Error del Backend: \(body)")
+                    }
+                } else {
+                    print("✅ Alerta enviada exitosamente al Backend.")
+                }
             }
         }.resume()
     }
     
     private func actualizarUIBotonPrincipal() {
-        if isServiceActive {
-            btnDesactivar.setTitle("DESACTIVAR", for: .normal)
-            btnDesactivar.backgroundColor = .systemRed
-        } else {
-            btnDesactivar.setTitle("ACTIVAR", for: .normal)
-            btnDesactivar.backgroundColor = UIColor(red: 16/255, green: 185/255, blue: 129/255, alpha: 1.0)
+        DispatchQueue.main.async {
+            if self.isServiceActive {
+                self.btnDesactivar.setTitle("DESACTIVAR", for: .normal)
+                self.btnDesactivar.backgroundColor = .systemRed
+            } else {
+                self.btnDesactivar.setTitle("ACTIVAR", for: .normal)
+                self.btnDesactivar.backgroundColor = UIColor(red: 16/255, green: 185/255, blue: 129/255, alpha: 1.0)
+            }
         }
     }
     
@@ -367,7 +404,6 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
         soundTimer = nil
     }
     
-    // MARK: - Gestión de contactos (duplicados y eliminación)
     func contactoExiste(telefono: String, id: String) -> Bool {
         let fetch: NSFetchRequest<ContactoEntity> = ContactoEntity.fetchRequest()
         let telPred = NSPredicate(format: "telefono == %@", telefono)
@@ -394,7 +430,6 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
             return
         }
 
-        // Buscar en BD el contacto por teléfono y eliminar por ID
         ContactService.shared.obtenerContactosPorUsuario(userId: userId, token: token) { result in
             switch result {
             case .success(let contactosBD):
@@ -402,10 +437,8 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
                 guard let id = objetivo?.id else { completion(false); return }
                 ContactService.shared.eliminarContacto(id: id, token: token) { delResult in
                     switch delResult {
-                    case .success:
-                        completion(true)
-                    case .failure:
-                        completion(false)
+                    case .success: completion(true)
+                    case .failure: completion(false)
                     }
                 }
             case .failure:
@@ -451,49 +484,55 @@ class HomeViewController: UIViewController, MKMapViewDelegate {
     }
 
     @IBAction func funcionBtnAgregarContacto(_ sender: UIButton) {
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        if let contactsVC = storyboard.instantiateViewController(withIdentifier: "ContactsViewController") as? ContactsViewController {
-            contactsVC.usuarioSesion = self.usuarioSesion
-            
-            contactsVC.contactoSeleccionado = { [weak self] contact in
-                let nombreCompleto = "\(contact.givenName) \(contact.familyName)"
-                let telefono = contact.phoneNumbers.first?.value.stringValue ?? ""
-                let id = contact.identifier
-                let email = (contact.emailAddresses.first?.value as String?)?.trimmingCharacters(in: .whitespacesAndNewlines)
-                let emailValido = (email?.isEmpty == false) ? email! : "unknown@novamovil.local"
+        let store = CNContactStore()
+        store.requestAccess(for: .contacts) { granted, error in
+            DispatchQueue.main.async {
+                if granted {
+                    let storyboard = UIStoryboard(name: "Main", bundle: nil)
+                    if let contactsVC = storyboard.instantiateViewController(withIdentifier: "ContactsViewController") as? ContactsViewController {
+                        contactsVC.usuarioSesion = self.usuarioSesion
+                        contactsVC.contactoSeleccionado = { [weak self] contact in
+                            DispatchQueue.main.async {
+                                guard let self = self else { return }
+                                
+                                let nombreCompleto = "\(contact.givenName) \(contact.familyName)"
+                                let telefonoOriginal = contact.phoneNumbers.first?.value.stringValue ?? ""
+                                let id = contact.identifier
+                                let email = (contact.emailAddresses.first?.value as String?)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                                let emailValido = (email?.isEmpty == false) ? email! : "unknown@novamovil.local"
 
-                // Evitar duplicados por teléfono o id
-                if let yaExiste = self?.contactoExiste(telefono: telefono, id: id), yaExiste {
-                    self?.presentarAlerta(mensaje: "Este contacto ya está en tu red de seguridad.")
-                    return
-                }
+                                if self.contactoExiste(telefono: telefonoOriginal, id: id) {
+                                    self.presentarAlerta(mensaje: "Este contacto ya está en tu red de seguridad.")
+                                    return
+                                }
 
-                self?.guardarContactoEnCoreData(nombre: nombreCompleto, telefono: telefono, id: id)
+                                self.guardarContactoEnCoreData(nombre: nombreCompleto, telefono: telefonoOriginal, id: id)
 
-                // Sincronizar con backend (BD) para mayor control
-                if let userId = UserDefaults.standard.object(forKey: "userId") as? Int,
-                   let token = UserDefaults.standard.string(forKey: "userToken") {
-                    let req = CreateContactRequest(
-                        userId: userId,
-                        fullName: nombreCompleto,
-                        phoneNumber: telefono.isEmpty ? nil : telefono,
-                        email: emailValido,
-                        enableWhatsapp: true
-                    )
-                    ContactService.shared.crearContacto(datos: req, token: token) { result in
-                        switch result {
-                        case .success:
-                            print("✅ Contacto sincronizado en BD")
-                        case .failure(let error):
-                            print("❌ Error sincronizando contacto: \(error)")
+                                if let userId = UserDefaults.standard.object(forKey: "userId") as? Int,
+                                   let token = UserDefaults.standard.string(forKey: "userToken") {
+                                    let req = CreateContactRequest(
+                                        userId: userId,
+                                        fullName: nombreCompleto,
+                                        phoneNumber: telefonoOriginal.isEmpty ? nil : telefonoOriginal,
+                                        email: emailValido,
+                                        enableWhatsapp: true
+                                    )
+                                    ContactService.shared.crearContacto(datos: req, token: token) { result in
+                                        switch result {
+                                        case .success: print("✅ Contacto sincronizado en BD")
+                                        case .failure(let error): print("❌ Error sincronizando contacto: \(error)")
+                                        }
+                                    }
+                                }
+                            }
                         }
+                        contactsVC.modalPresentationStyle = .pageSheet
+                        self.present(contactsVC, animated: true)
                     }
                 } else {
-                    print("⚠️ No se pudo sincronizar contacto: faltan userId/token")
+                    self.presentarAlerta(mensaje: "La app necesita acceso a contactos para agregar tu red de seguridad.")
                 }
             }
-            contactsVC.modalPresentationStyle = .pageSheet
-            present(contactsVC, animated: true)
         }
     }
     
@@ -525,23 +564,18 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "celdaContacto", for: indexPath) as! ContactCellCollectionViewCell
         let contacto = contactosGuardados[indexPath.item]
         
-        // Extraer iniciales del nombre completo
         let nombreCompleto = (contacto.nombre ?? "").trimmingCharacters(in: .whitespaces)
         let palabras = nombreCompleto.components(separatedBy: " ").filter { !$0.isEmpty }
         var iniciales = ""
         
         if palabras.count >= 2 {
-            // Si hay nombre y apellido, tomar primera letra de cada uno
             iniciales = String(palabras[0].prefix(1)) + String(palabras[1].prefix(1))
         } else if !palabras.isEmpty {
-            // Si solo hay una palabra, tomar las dos primeras letras
             iniciales = String(palabras[0].prefix(2))
         }
         
-        // Mostrar solo el primer nombre
         let primerNombre = palabras.first ?? (contacto.nombre ?? "")
         
-        // Configurar el label de nombre (debajo del círculo)
         cell.lblNombre.text = primerNombre
         cell.lblNombre.font = UIFont.systemFont(ofSize: 11)
         cell.lblNombre.textAlignment = .center
@@ -550,18 +584,15 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
         cell.lblNombre.minimumScaleFactor = 0.8
         cell.lblNombre.textColor = .label
         
-        // Configurar el círculo con las iniciales
         cell.lblLetrsNombre.text = iniciales.uppercased()
         cell.lblLetrsNombre.font = UIFont.systemFont(ofSize: 18, weight: .bold)
         cell.lblLetrsNombre.textColor = .white
         cell.lblLetrsNombre.textAlignment = .center
-        cell.lblLetrsNombre.backgroundColor = UIColor(red: 0.06, green: 0.42, blue: 0.31, alpha: 1.0) // Verde oscuro
+        cell.lblLetrsNombre.backgroundColor = UIColor(red: 0.06, green: 0.42, blue: 0.31, alpha: 1.0)
         
-        // Hacer el círculo después de que la celda tenga su tamaño final
-        DispatchQueue.main.async {
-            cell.lblLetrsNombre.layer.cornerRadius = cell.lblLetrsNombre.frame.width / 2
-            cell.lblLetrsNombre.clipsToBounds = true
-        }
+        cell.layoutIfNeeded()
+        cell.lblLetrsNombre.layer.cornerRadius = cell.lblLetrsNombre.frame.width / 2
+        cell.lblLetrsNombre.clipsToBounds = true
         
         return cell
     }
@@ -577,11 +608,7 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
         let contacto = contactosGuardados[indexPath.item]
-        let alerta = UIAlertController(
-            title: "Quitar contacto",
-            message: "¿Deseas quitar a \(contacto.nombre ?? "este contacto") de tu red de seguridad?",
-            preferredStyle: .actionSheet
-        )
+        let alerta = UIAlertController(title: "Quitar contacto", message: "¿Deseas quitar a \(contacto.nombre ?? "este contacto") de tu red de seguridad?", preferredStyle: .actionSheet)
         let eliminar = UIAlertAction(title: "Eliminar", style: .destructive) { _ in
             let telefono = contacto.telefono ?? ""
             self.eliminarContactoRemoto(telefono: telefono) { ok in
@@ -597,3 +624,4 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
         present(alerta, animated: true)
     }
 }
+
